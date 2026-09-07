@@ -103,6 +103,7 @@ export interface CompetitorStore {
 
 export interface AdCampaign {
   id: string;
+  adsetId?: string;
   platform: 'META' | 'GOOGLE' | 'TIKTOK';
   name: string;
   status: 'ACTIVE' | 'PAUSED';

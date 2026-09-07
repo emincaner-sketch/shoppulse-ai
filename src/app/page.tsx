@@ -162,17 +162,16 @@ export default function Home() {
         // First try the default endpoint (uses env vars)
         let url = '/api/meta/campaigns';
 
-        // If localStorage has saved credentials, pass them as query params as a fallback
+        // If localStorage has saved credentials, pass them as query params as an override
         try {
           const savedToken = localStorage.getItem('meta_access_token');
           const savedAccountId = localStorage.getItem('meta_ad_account_id');
-          const savedConnected = localStorage.getItem('meta_connected');
-          if (savedConnected === 'true' && savedToken && savedAccountId) {
+          if (savedToken && savedAccountId) {
             url = `/api/meta/campaigns?token=${encodeURIComponent(savedToken)}&adAccountId=${encodeURIComponent(savedAccountId)}`;
           }
         } catch {}
 
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.isConnected) {

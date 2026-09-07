@@ -20,7 +20,7 @@ import {
   Bot,
   Sparkles,
   Edit2,
-  ArrowUpRight,
+  RefreshCw,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -60,8 +60,11 @@ export default function AdSpendSentinel({
   const [rule3Enabled, setRule3Enabled] = useState(true);
   const [rulesSaved, setRulesSaved] = useState(false);
   const [loadingCampaignId, setLoadingCampaignId] = useState<string | null>(null);
-  const [scaledSuccess, setScaledSuccess] = useState(false);
   const [showWasteBreakdown, setShowWasteBreakdown] = useState(false);
+
+  // Live campaigns fetched directly from /api/meta/campaigns
+  const [liveCampaigns, setLiveCampaigns] = useState<AdCampaign[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Budget management states
   const [localBudgets, setLocalBudgets] = useState<Record<string, number>>({});
@@ -75,7 +78,7 @@ export default function AdSpendSentinel({
   // Auto-dismiss toast
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => setToast(null), 4000);
+      const timer = setTimeout(() => setToast(null), 4500);
       return () => clearTimeout(timer);
     }
   }, [toast]);
@@ -122,17 +125,49 @@ export default function AdSpendSentinel({
     } catch {}
   }, []);
 
-  // Effective connection state: either prop from parent OR localStorage persistence
-  const effectiveMetaConnected = isMetaConnected || localMetaConnected;
+  // Fetch live campaigns directly from /api/meta/campaigns on mount
+  const fetchLiveCampaigns = async () => {
+    setIsSyncing(true);
+    try {
+      let url = '/api/meta/campaigns';
+      const savedToken = typeof window !== 'undefined' ? localStorage.getItem('meta_access_token') : null;
+      const savedAccountId = typeof window !== 'undefined' ? localStorage.getItem('meta_ad_account_id') : null;
+      if (savedToken && savedAccountId) {
+        url = `/api/meta/campaigns?token=${encodeURIComponent(savedToken)}&adAccountId=${encodeURIComponent(savedAccountId)}`;
+      }
+
+      const res = await fetch(url, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.isConnected && Array.isArray(data.campaigns) && data.campaigns.length > 0) {
+          setLiveCampaigns(data.campaigns);
+          setLocalMetaConnected(true);
+        }
+      }
+    } catch (err) {
+      console.warn('[AdSpendSentinel] Failed to fetch live campaigns on mount:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveCampaigns();
+  }, []);
+
+  // Effective connection state: prop from parent OR localStorage OR live campaigns loaded
+  const effectiveMetaConnected = isMetaConnected || localMetaConnected || liveCampaigns.length > 0;
 
   const [adWasteSaved, setAdWasteSaved] = useState(isMetaConnected ? 420 : 0);
 
-  // Update adWasteSaved when connection state changes
   useEffect(() => {
     if (effectiveMetaConnected && adWasteSaved === 0) {
       setAdWasteSaved(420);
     }
   }, [effectiveMetaConnected]);
+
+  // Use live campaigns if fetched, otherwise fallback to prop campaigns
+  const currentCampaigns = liveCampaigns.length > 0 ? liveCampaigns : campaigns;
 
   // Helper to get campaign current budget
   const getCampaignBudget = (camp: AdCampaign): number => {
@@ -140,26 +175,34 @@ export default function AdSpendSentinel({
   };
 
   // Filter campaigns
-  const filteredCampaigns = campaigns.filter((c) => {
+  const filteredCampaigns = currentCampaigns.filter((c) => {
     if (platformFilter === 'ALL') return true;
     return c.platform === platformFilter;
   });
 
-  const totalSpend = effectiveMetaConnected ? campaigns.reduce((acc, c) => acc + c.spendToday, 0) : 0;
-  const activeCount = effectiveMetaConnected ? campaigns.filter((c) => c.status === 'ACTIVE').length : 0;
+  const totalSpend = effectiveMetaConnected
+    ? currentCampaigns.reduce((acc, c) => acc + c.spendToday, 0)
+    : 0;
+  const activeCount = effectiveMetaConnected
+    ? currentCampaigns.filter((c) => c.status === 'ACTIVE').length
+    : 0;
 
-  const validRoas = campaigns.filter((c) => c.roasToday > 0);
+  const validRoas = currentCampaigns.filter((c) => c.roasToday > 0);
   const avgRoasStr = !effectiveMetaConnected
     ? (language === 'tr' ? 'Bağlantı Bekleniyor' : 'Pending Connect')
     : validRoas.length > 0
     ? `${(validRoas.reduce((a, c) => a + c.roasToday, 0) / validRoas.length).toFixed(2)}x`
     : (language === 'tr' ? 'İlk Harcama Bekleniyor' : 'Awaiting Spend');
 
-  const validCpc = campaigns.filter((c) => c.cpc > 0);
+  const validCpc = currentCampaigns.filter((c) => c.cpc > 0);
   const avgCpcStr = !effectiveMetaConnected
     ? (language === 'tr' ? 'Bağlantı Bekleniyor' : 'Pending Connect')
     : validCpc.length > 0
-    ? formatCurrency(validCpc.reduce((a, c) => a + c.cpc, 0) / validCpc.length, currency, { maximumFractionDigits: 2 })
+    ? formatCurrency(
+        validCpc.reduce((a, c) => a + c.cpc, 0) / validCpc.length,
+        currency,
+        { maximumFractionDigits: 2 }
+      )
     : (language === 'tr' ? 'Veri Bekleniyor' : 'Awaiting Data');
 
   const handleToggle = async (campaign: AdCampaign) => {
@@ -178,6 +221,13 @@ export default function AdSpendSentinel({
 
       if (res.ok) {
         onToggleCampaignStatus(campaign.id);
+        setLiveCampaigns((prev) =>
+          prev.map((c) =>
+            c.id === campaign.id
+              ? { ...c, status: newAction === 'PAUSE' ? 'PAUSED' : 'ACTIVE' }
+              : c
+          )
+        );
         if (newAction === 'PAUSE') {
           setAdWasteSaved((prev) => prev + 85);
         }
@@ -185,6 +235,13 @@ export default function AdSpendSentinel({
     } catch (e) {
       console.warn('API Toggle error, falling back locally', e);
       onToggleCampaignStatus(campaign.id);
+      setLiveCampaigns((prev) =>
+        prev.map((c) =>
+          c.id === campaign.id
+            ? { ...c, status: newAction === 'PAUSE' ? 'PAUSED' : 'ACTIVE' }
+            : c
+        )
+      );
     } finally {
       setLoadingCampaignId(null);
     }
@@ -197,12 +254,14 @@ export default function AdSpendSentinel({
     setBoostingCampaignId(camp.id);
 
     try {
-      const accessToken = typeof window !== 'undefined' ? localStorage.getItem('meta_access_token') : null;
+      const accessToken =
+        typeof window !== 'undefined' ? localStorage.getItem('meta_access_token') : null;
       const res = await fetch('/api/meta/campaigns/update-budget', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaignId: camp.id,
+          adsetId: camp.adsetId,
           budgetDelta: delta,
           currentBudget,
           accessToken,
@@ -214,6 +273,9 @@ export default function AdSpendSentinel({
       if (res.ok && data.success) {
         const updated = data.updatedBudget || targetBudget;
         setLocalBudgets((prev) => ({ ...prev, [camp.id]: updated }));
+        setLiveCampaigns((prev) =>
+          prev.map((c) => (c.id === camp.id ? { ...c, dailyBudget: updated } : c))
+        );
         onScaleCampaignBudget?.(camp.id, updated);
 
         confetti({
@@ -225,22 +287,38 @@ export default function AdSpendSentinel({
 
         setToast({
           title: language === 'tr' ? 'Meta Bütçesi Artırıldı 🚀' : 'Meta Budget Boosted 🚀',
-          message: language === 'tr'
-            ? `"${camp.name}" bütçesine +$${delta} eklendi: Yeni bütçe ${formatCurrency(updated, currency)}/gün.`
-            : `Added +$${delta} to "${camp.name}": New budget ${formatCurrency(updated, currency)}/day.`,
+          message:
+            data.message ||
+            (language === 'tr'
+              ? `"${camp.name}" bütçesine +$${delta} eklendi: Yeni bütçe ${formatCurrency(
+                  updated,
+                  currency
+                )}/gün.`
+              : `Added +$${delta} to "${camp.name}": New budget ${formatCurrency(
+                  updated,
+                  currency
+                )}/day.`),
           type: 'success',
         });
       } else {
         setToast({
           title: language === 'tr' ? 'Bütçe Güncellenemedi' : 'Boost Failed',
-          message: data.error || 'Meta API hatası oluştu.',
+          message:
+            data.error ||
+            (language === 'tr'
+              ? 'Meta API bütçe güncelleme isteğini reddetti.'
+              : 'Meta API rejected budget update.'),
           type: 'error',
         });
       }
     } catch (err: any) {
       setToast({
         title: language === 'tr' ? 'Bağlantı Hatası' : 'Connection Error',
-        message: err.message || 'Meta API sunucusuna erişilemedi.',
+        message:
+          err.message ||
+          (language === 'tr'
+            ? 'Meta API sunucusuna erişilemedi.'
+            : 'Could not reach Meta API server.'),
         type: 'error',
       });
     } finally {
@@ -253,7 +331,10 @@ export default function AdSpendSentinel({
     if (isNaN(newAmount) || newAmount <= 0) {
       setToast({
         title: language === 'tr' ? 'Geçersiz Tutar' : 'Invalid Amount',
-        message: language === 'tr' ? 'Lütfen 0\'dan büyük geçerli bir bütçe girin.' : 'Please enter a valid budget amount.',
+        message:
+          language === 'tr'
+            ? "Lütfen 0'dan büyük geçerli bir bütçe girin."
+            : 'Please enter a valid budget amount.',
         type: 'error',
       });
       return;
@@ -261,12 +342,14 @@ export default function AdSpendSentinel({
 
     setBoostingCampaignId(camp.id);
     try {
-      const accessToken = typeof window !== 'undefined' ? localStorage.getItem('meta_access_token') : null;
+      const accessToken =
+        typeof window !== 'undefined' ? localStorage.getItem('meta_access_token') : null;
       const res = await fetch('/api/meta/campaigns/update-budget', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaignId: camp.id,
+          adsetId: camp.adsetId,
           newDailyBudget: newAmount,
           accessToken,
         }),
@@ -277,6 +360,9 @@ export default function AdSpendSentinel({
       if (res.ok && data.success) {
         const updated = data.updatedBudget || newAmount;
         setLocalBudgets((prev) => ({ ...prev, [camp.id]: updated }));
+        setLiveCampaigns((prev) =>
+          prev.map((c) => (c.id === camp.id ? { ...c, dailyBudget: updated } : c))
+        );
         onScaleCampaignBudget?.(camp.id, updated);
 
         confetti({
@@ -287,23 +373,31 @@ export default function AdSpendSentinel({
 
         setToast({
           title: language === 'tr' ? 'Günlük Bütçe Güncellendi ✓' : 'Daily Budget Updated ✓',
-          message: language === 'tr'
-            ? `"${camp.name}" günlük bütçesi ${formatCurrency(updated, currency)}/gün olarak ayarlandı.`
-            : `"${camp.name}" daily budget set to ${formatCurrency(updated, currency)}/day.`,
+          message:
+            data.message ||
+            (language === 'tr'
+              ? `"${camp.name}" günlük bütçesi ${formatCurrency(updated, currency)}/gün olarak ayarlandı.`
+              : `"${camp.name}" daily budget set to ${formatCurrency(updated, currency)}/day.`),
           type: 'success',
         });
         setEditingCampaignId(null);
       } else {
         setToast({
           title: language === 'tr' ? 'Güncelleme Başarısız' : 'Update Failed',
-          message: data.error || 'Meta API hatası.',
+          message:
+            data.error ||
+            (language === 'tr'
+              ? 'Meta API bütçe güncelleme isteğini reddetti.'
+              : 'Meta API rejected budget update.'),
           type: 'error',
         });
       }
     } catch (err: any) {
       setToast({
         title: language === 'tr' ? 'Hata' : 'Error',
-        message: err.message || 'Bütçe güncellenemedi.',
+        message:
+          err.message ||
+          (language === 'tr' ? 'Bütçe güncellenemedi.' : 'Failed to update budget.'),
         type: 'error',
       });
     } finally {
@@ -313,7 +407,7 @@ export default function AdSpendSentinel({
 
   // Autopilot top card 1-click test boost
   const handleAutopilotQuickBoost = async () => {
-    const targetCamp = campaigns.find((c) => c.status === 'ACTIVE') || campaigns[0];
+    const targetCamp = currentCampaigns.find((c) => c.status === 'ACTIVE') || currentCampaigns[0];
     if (!targetCamp) return;
 
     setIsAutopilotBoosting(true);
@@ -345,7 +439,7 @@ export default function AdSpendSentinel({
     }
   };
 
-  const topActiveCampaign = campaigns.find((c) => c.status === 'ACTIVE') || campaigns[0];
+  const topActiveCampaign = currentCampaigns.find((c) => c.status === 'ACTIVE') || currentCampaigns[0];
 
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[#121215] p-6 shadow-sm space-y-5 relative">
@@ -388,7 +482,18 @@ export default function AdSpendSentinel({
         </div>
 
         {/* Shield Status Badge & Rules Trigger */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Live Sync Button */}
+          <button
+            onClick={fetchLiveCampaigns}
+            disabled={isSyncing}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-transparent text-zinc-400 hover:text-white text-xs font-medium transition-colors"
+            title={language === 'tr' ? 'Meta verilerini canlı senkronize et' : 'Sync Meta live metrics'}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-blue-400' : ''}`} />
+            <span className="hidden sm:inline">{language === 'tr' ? 'Meta Senkron' : 'Sync Meta'}</span>
+          </button>
+
           {!effectiveMetaConnected ? (
             <button
               onClick={onOpenConnectMeta}
@@ -400,7 +505,7 @@ export default function AdSpendSentinel({
           ) : (
             <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1877f2]/10 border border-[#1877f2]/20 text-[#1877f2] text-xs font-mono font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>{language === 'tr' ? 'Meta Bağlı' : 'Meta Connected'}</span>
+              <span>{language === 'tr' ? 'Meta Canlı Bağlı' : 'Meta Live'}</span>
             </span>
           )}
 
@@ -569,7 +674,7 @@ export default function AdSpendSentinel({
         <div className="p-3.5 rounded-xl border border-white/[0.06] bg-zinc-900/40">
           <span className="text-[11px] text-zinc-400 font-mono">{t.ads.activeCampaigns}</span>
           <div className="text-lg font-medium text-zinc-200 font-mono mt-0.5 tabular-nums">
-            {effectiveMetaConnected ? `${activeCount} / ${campaigns.length}` : '0 / 0'}
+            {effectiveMetaConnected ? `${activeCount} / ${currentCampaigns.length}` : '0 / 0'}
           </div>
         </div>
         <div className="p-3.5 rounded-xl border border-white/[0.06] bg-zinc-900/40">
@@ -586,9 +691,9 @@ export default function AdSpendSentinel({
       <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-2">
         <div className="flex items-center gap-1.5">
           {[
-            { id: 'ALL', label: language === 'tr' ? 'Tüm Kampanyalar' : 'All Campaigns', count: campaigns.length },
-            { id: 'META', label: 'Meta Ads', count: campaigns.filter((c) => c.platform === 'META').length },
-            { id: 'GOOGLE', label: 'Google Ads', count: campaigns.filter((c) => c.platform === 'GOOGLE').length },
+            { id: 'ALL', label: language === 'tr' ? 'Tüm Kampanyalar' : 'All Campaigns', count: currentCampaigns.length },
+            { id: 'META', label: 'Meta Ads', count: currentCampaigns.filter((c) => c.platform === 'META').length },
+            { id: 'GOOGLE', label: 'Google Ads', count: currentCampaigns.filter((c) => c.platform === 'GOOGLE').length },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -651,6 +756,13 @@ export default function AdSpendSentinel({
                   <td className="py-3.5 px-5">
                     <div className="font-medium text-zinc-100">{camp.name}</div>
                     <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                      ID: <span className="text-zinc-400 select-all">{camp.id}</span>
+                      {camp.adsetId && (
+                        <span className="ml-1 text-zinc-500 font-mono">
+                          (Set: <span className="text-zinc-400 select-all">{camp.adsetId}</span>)
+                        </span>
+                      )}
+                      <span className="mx-1.5">•</span>
                       CPC: {formatCurrency(camp.cpc, currency, { maximumFractionDigits: 2 })} • CTR: %{camp.ctr}
                       {autopilotEnabled && (
                         <span className="ml-2 text-indigo-400 font-medium">
