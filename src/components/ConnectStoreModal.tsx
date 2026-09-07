@@ -28,7 +28,10 @@ export default function ConnectStoreModal({
 }: ConnectStoreModalProps) {
   const t = translations[language];
   const [storeDomain, setStoreDomain] = useState('');
+  const [authMethod, setAuthMethod] = useState<'TOKEN' | 'CREDENTIALS'>('TOKEN');
   const [accessToken, setAccessToken] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -58,14 +61,16 @@ export default function ConnectStoreModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           storeDomain: cleanDomain,
-          accessToken: accessToken.trim() || undefined,
+          accessToken: authMethod === 'TOKEN' ? (accessToken.trim() || undefined) : undefined,
+          clientId: authMethod === 'CREDENTIALS' || accessToken.startsWith('shpss_') ? clientId.trim() : undefined,
+          clientSecret: authMethod === 'CREDENTIALS' ? clientSecret.trim() : (accessToken.startsWith('shpss_') ? accessToken.trim() : undefined),
         }),
       });
 
       setCurrentStep(3);
       const data = await res.json();
 
-      if (!res.ok && !data.isLive && accessToken.trim()) {
+      if (!res.ok && !data.isLive) {
         setIsConnecting(false);
         setErrorMessage(data.error || 'Shopify Admin API erişim anahtarı doğrulanamadı.');
         return;
@@ -166,6 +171,32 @@ export default function ConnectStoreModal({
                 : 'Connect directly using your Shopify Admin API access token without public OAuth.'}
             </p>
 
+            {/* Auth Method Selector */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-zinc-900 border border-white/[0.06] mb-4 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setAuthMethod('TOKEN')}
+                className={`py-1.5 rounded-lg transition-all ${
+                  authMethod === 'TOKEN'
+                    ? 'bg-zinc-800 text-zinc-100 font-semibold shadow-sm border border-white/[0.08]'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Admin Token (shpat_)
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuthMethod('CREDENTIALS')}
+                className={`py-1.5 rounded-lg transition-all ${
+                  authMethod === 'CREDENTIALS'
+                    ? 'bg-zinc-800 text-zinc-100 font-semibold shadow-sm border border-white/[0.08]'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Client ID & Secret
+              </button>
+            </div>
+
             {errorMessage && (
               <div className="mb-4 p-3 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-300 text-xs font-mono">
                 {errorMessage}
@@ -192,24 +223,62 @@ export default function ConnectStoreModal({
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-medium text-zinc-300">
-                    Admin API Access Token
-                  </label>
-                  <span className="text-[10px] text-zinc-500 font-mono">
-                    {language === 'tr' ? '(Opsiyonel: .env varsa boş bırakın)' : '(Optional if set in .env)'}
-                  </span>
+              {authMethod === 'TOKEN' ? (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-zinc-300">
+                      Admin API Access Token
+                    </label>
+                    <span className="text-[10px] text-zinc-500 font-mono">
+                      {language === 'tr' ? '(Opsiyonel: .env varsa boş bırakın)' : '(Optional if set in .env)'}
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    value={accessToken}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAccessToken(val);
+                      if (val.trim().startsWith('shpss_')) {
+                        setClientSecret(val.trim());
+                        setAuthMethod('CREDENTIALS');
+                      }
+                    }}
+                    disabled={isConnecting}
+                    placeholder="shpat_xxxxxxxxxxxxxxxxxxxx"
+                    className="w-full bg-zinc-900 border border-white/[0.08] hover:border-white/[0.14] focus:border-white/25 rounded-lg px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none disabled:opacity-50 font-mono"
+                  />
                 </div>
-                <input
-                  type="password"
-                  value={accessToken}
-                  onChange={(e) => setAccessToken(e.target.value)}
-                  disabled={isConnecting}
-                  placeholder="shpat_xxxxxxxxxxxxxxxxxxxx"
-                  className="w-full bg-zinc-900 border border-white/[0.08] hover:border-white/[0.14] focus:border-white/25 rounded-lg px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none disabled:opacity-50 font-mono"
-                />
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1">
+                      Shopify Client ID (API Key)
+                    </label>
+                    <input
+                      type="text"
+                      value={clientId}
+                      onChange={(e) => setClientId(e.target.value)}
+                      disabled={isConnecting}
+                      placeholder="e6e04cd47b6260a63b7ecd553f191b3x"
+                      className="w-full bg-zinc-900 border border-white/[0.08] hover:border-white/[0.14] focus:border-white/25 rounded-lg px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none disabled:opacity-50 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1">
+                      Shopify Client Secret (shpss_...)
+                    </label>
+                    <input
+                      type="password"
+                      value={clientSecret}
+                      onChange={(e) => setClientSecret(e.target.value)}
+                      disabled={isConnecting}
+                      placeholder="shpss_xxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full bg-zinc-900 border border-white/[0.08] hover:border-white/[0.14] focus:border-white/25 rounded-lg px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 focus:outline-none disabled:opacity-50 font-mono"
+                    />
+                  </div>
+                </div>
+              )}
 
               {isConnecting && (
                 <div className="p-3 rounded-xl bg-zinc-900/80 border border-white/[0.06] space-y-2">
@@ -248,7 +317,11 @@ export default function ConnectStoreModal({
 
             <div className="mt-3.5 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 font-mono">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Direct Admin API • OAuth Gerektirmez</span>
+              <span>Direct Admin API • Client Credentials & Access Token</span>
+            </div>
+
+            <div className="mt-2 text-center text-[10px] text-zinc-500 font-mono">
+              Otomatik token almak için terminalde: <code className="text-zinc-300 bg-zinc-900 px-1.5 py-0.5 rounded border border-white/[0.06]">node scripts/get-token.js</code>
             </div>
           </div>
         ) : (

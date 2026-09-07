@@ -1,24 +1,118 @@
 /**
  * Shopify Custom App (Private Internal Tool) Direct GraphQL Client
- * Connects directly using Shopify Admin API Access Token (shpat_...)
- * without requiring OAuth handshakes, App Store listings, or third-party redirects.
+ * Supports both direct Admin API Access Token (shpat_...)
+ * and automated Client Credentials Grant (SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET)
+ * for zero-friction background token generation.
  */
 
 export interface ShopifyCustomAppConfig {
   storeDomain: string;
-  accessToken: string;
+  accessToken?: string;
+  clientId?: string;
+  clientSecret?: string;
   apiVersion?: string;
 }
+
+// In-memory token cache for automatically exchanged tokens
+const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
 export function getCustomAppConfig(): ShopifyCustomAppConfig {
   return {
     storeDomain:
       process.env.SHOPIFY_STORE_DOMAIN ||
       process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN ||
-      'lumina-fashion.myshopify.com',
+      '7dyz3u-i1.myshopify.com',
     accessToken: process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN || '',
+    clientId: process.env.SHOPIFY_CLIENT_ID || process.env.SHOPIFY_API_KEY || '',
+    clientSecret: process.env.SHOPIFY_CLIENT_SECRET || process.env.SHOPIFY_API_SECRET || '',
     apiVersion: process.env.SHOPIFY_API_VERSION || '2024-10',
   };
+}
+
+/**
+ * Automatically resolves a valid access token.
+ * If user entered an shpss_ secret or provided clientId/clientSecret,
+ * it performs a Client Credentials exchange with Shopify automatically.
+ */
+export async function resolveAccessToken(
+  config: ShopifyCustomAppConfig
+): Promise<{ token?: string; error?: string }> {
+  const rawToken = config.accessToken?.trim();
+  const domain = config.storeDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+  // 1. If we have a direct shpat_ or offline token, use it immediately
+  if (rawToken && !rawToken.startsWith('shpss_')) {
+    return { token: rawToken };
+  }
+
+  // 2. Check if we have a fresh cached token in memory
+  const cached = tokenCache.get(domain);
+  if (cached && cached.expiresAt > Date.now()) {
+    return { token: cached.token };
+  }
+
+  // 3. Prepare credentials for Client Credentials grant
+  const secret =
+    (rawToken && rawToken.startsWith('shpss_') ? rawToken : config.clientSecret) ||
+    process.env.SHOPIFY_CLIENT_SECRET ||
+    '';
+  const id = config.clientId || process.env.SHOPIFY_CLIENT_ID || process.env.SHOPIFY_API_KEY || '';
+
+  if (!secret || !id) {
+    if (rawToken?.startsWith('shpss_')) {
+      return {
+        error:
+          'Girdiğiniz anahtar bir Client Secret (shpss_...). Otomatik token değişimi için lütfen Client ID bilginizi de girin veya .env dosyasına SHOPIFY_CLIENT_ID tanımlayın.',
+      };
+    }
+    return { error: 'Geçerli bir Shopify Admin Access Token veya Client Credentials bulunamadı.' };
+  }
+
+  // 4. Attempt Client Credentials Grant
+  try {
+    const res = await fetch(`https://${domain}/admin/oauth/access_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+      },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: id,
+        client_secret: secret,
+      }).toString(),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.access_token) {
+      // Cache token for 23 hours
+      tokenCache.set(domain, {
+        token: data.access_token,
+        expiresAt: Date.now() + 23 * 60 * 60 * 1000,
+      });
+      return { token: data.access_token };
+    }
+
+    if (data.error === 'application_cannot_be_found') {
+      return {
+        error: `Shopify API uygulaması bulunamadı (${id}). Lütfen Client ID'nizin tam olarak 32 karakter olduğunu kontrol edin.`,
+      };
+    }
+
+    if (data.error === 'shop_not_permitted') {
+      return {
+        error:
+          'Bu mağazada doğrudan Client Credentials izni bulunmuyor. Lütfen "scripts/get-token.js" aracını çalıştırarak 1-tıkla yetkilendirme yapın.',
+      };
+    }
+
+    return {
+      error: `Shopify Token Değişimi Hatası: ${data.error_description || data.error || res.statusText}`,
+    };
+  } catch (err: any) {
+    return { error: `Shopify bağlantı hatası: ${err.message}` };
+  }
 }
 
 /**
@@ -29,12 +123,23 @@ export async function shopifyGraphQL<T = any>(
   variables: Record<string, any> = {},
   customConfig?: Partial<ShopifyCustomAppConfig>
 ): Promise<{ data?: T; errors?: any[]; isLive: boolean }> {
-  const config = { ...getCustomAppConfig(), ...customConfig };
+  const baseConfig = getCustomAppConfig();
+  const config = { ...baseConfig, ...customConfig };
 
-  if (!config.accessToken || !config.storeDomain) {
+  if (!config.storeDomain) {
     return {
       isLive: false,
-      errors: [{ message: 'No Shopify Admin API access token configured. Using local live simulation.' }],
+      errors: [{ message: 'No Shopify store domain configured. Using local live simulation.' }],
+    };
+  }
+
+  // Resolve valid access token (direct shpat_ or auto client_credentials)
+  const { token, error: tokenError } = await resolveAccessToken(config);
+
+  if (!token) {
+    return {
+      isLive: false,
+      errors: [{ message: tokenError || 'No valid Shopify token available.' }],
     };
   }
 
@@ -45,7 +150,7 @@ export async function shopifyGraphQL<T = any>(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': config.accessToken,
+        'X-Shopify-Access-Token': token,
       },
       body: JSON.stringify({ query, variables }),
       cache: 'no-store',

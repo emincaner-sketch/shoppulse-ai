@@ -80,13 +80,15 @@ export async function POST(request: NextRequest) {
     const customConfig = {
       storeDomain: body.storeDomain || process.env.SHOPIFY_STORE_DOMAIN,
       accessToken: body.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN,
+      clientId: body.clientId || process.env.SHOPIFY_CLIENT_ID,
+      clientSecret: body.clientSecret || process.env.SHOPIFY_CLIENT_SECRET,
     };
 
-    if (!customConfig.accessToken || !customConfig.storeDomain) {
+    if (!customConfig.storeDomain || (!customConfig.accessToken && (!customConfig.clientId || !customConfig.clientSecret))) {
       return NextResponse.json(
         {
           isLive: false,
-          error: 'Lütfen Mağaza Alan Adı (Store Domain) ve Admin API Access Token (shpat_...) girin veya .env dosyasına tanımlayın.',
+          error: 'Lütfen Mağaza Alan Adı (Store Domain) ve Admin API Access Token (shpat_...) veya Client ID & Secret bilgilerini girin.',
         },
         { status: 400 }
       );
@@ -101,7 +103,12 @@ export async function POST(request: NextRequest) {
     const productsRes = await shopifyGraphQL(
       FETCH_PRODUCTS_QUERY,
       { first: 50 },
-      { storeDomain: cleanDomain, accessToken: customConfig.accessToken }
+      {
+        storeDomain: cleanDomain,
+        accessToken: customConfig.accessToken,
+        clientId: customConfig.clientId,
+        clientSecret: customConfig.clientSecret,
+      }
     );
 
     if (productsRes.errors && productsRes.errors.length > 0) {
@@ -117,7 +124,12 @@ export async function POST(request: NextRequest) {
     const ordersRes = await shopifyGraphQL(
       FETCH_ORDERS_QUERY,
       { first: 100 },
-      { storeDomain: cleanDomain, accessToken: customConfig.accessToken }
+      {
+        storeDomain: cleanDomain,
+        accessToken: customConfig.accessToken,
+        clientId: customConfig.clientId,
+        clientSecret: customConfig.clientSecret,
+      }
     );
 
     const rawProducts = productsRes.data?.products?.edges || [];
