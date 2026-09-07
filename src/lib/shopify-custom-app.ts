@@ -183,7 +183,7 @@ export async function shopifyGraphQL<T = any>(
  */
 export const FETCH_PRODUCTS_QUERY = `
   query FetchCatalog($first: Int = 50) {
-    products(first: $first, sortKey: BEST_SELLING) {
+    products(first: $first, sortKey: CREATED_AT, reverse: true) {
       edges {
         node {
           id
