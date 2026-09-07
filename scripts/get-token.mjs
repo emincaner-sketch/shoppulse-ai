@@ -104,7 +104,7 @@ async function tryClientCredentials() {
       console.log('🔑 Access Token:', data.access_token);
       console.log('📋 Yetki Kapsamı (Scopes):', data.scope || 'Tümü');
       saveTokenToEnv(data.access_token);
-      process.exit(0);
+      return;
     } else {
       console.log(`ℹ️  Client Credentials yanıtı: [${res.status}] ${data.error || ''} - ${data.error_description || ''}`);
     }
