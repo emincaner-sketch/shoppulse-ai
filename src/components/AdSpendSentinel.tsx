@@ -52,7 +52,29 @@ export default function AdSpendSentinel({
   const [loadingCampaignId, setLoadingCampaignId] = useState<string | null>(null);
   const [scaledSuccess, setScaledSuccess] = useState(false);
   const [showWasteBreakdown, setShowWasteBreakdown] = useState(false);
+
+  // Check localStorage for persisted Meta connection state
+  const [localMetaConnected, setLocalMetaConnected] = useState(false);
+  useEffect(() => {
+    try {
+      const savedConnected = localStorage.getItem('meta_connected');
+      if (savedConnected === 'true') {
+        setLocalMetaConnected(true);
+      }
+    } catch {}
+  }, []);
+
+  // Effective connection state: either prop from parent OR localStorage persistence
+  const effectiveMetaConnected = isMetaConnected || localMetaConnected;
+
   const [adWasteSaved, setAdWasteSaved] = useState(isMetaConnected ? 420 : 0);
+
+  // Update adWasteSaved when connection state changes
+  useEffect(() => {
+    if (effectiveMetaConnected && adWasteSaved === 0) {
+      setAdWasteSaved(420);
+    }
+  }, [effectiveMetaConnected]);
 
   // Filter campaigns
   const filteredCampaigns = campaigns.filter((c) => {
@@ -60,18 +82,18 @@ export default function AdSpendSentinel({
     return c.platform === platformFilter;
   });
 
-  const totalSpend = isMetaConnected ? campaigns.reduce((acc, c) => acc + c.spendToday, 0) : 0;
-  const activeCount = isMetaConnected ? campaigns.filter((c) => c.status === 'ACTIVE').length : 0;
+  const totalSpend = effectiveMetaConnected ? campaigns.reduce((acc, c) => acc + c.spendToday, 0) : 0;
+  const activeCount = effectiveMetaConnected ? campaigns.filter((c) => c.status === 'ACTIVE').length : 0;
 
   const validRoas = campaigns.filter((c) => c.roasToday > 0);
-  const avgRoasStr = !isMetaConnected
+  const avgRoasStr = !effectiveMetaConnected
     ? (language === 'tr' ? 'Bağlantı Bekleniyor' : 'Pending Connect')
     : validRoas.length > 0
     ? `${(validRoas.reduce((a, c) => a + c.roasToday, 0) / validRoas.length).toFixed(2)}x`
     : (language === 'tr' ? 'İlk Harcama Bekleniyor' : 'Awaiting Spend');
 
   const validCpc = campaigns.filter((c) => c.cpc > 0);
-  const avgCpcStr = !isMetaConnected
+  const avgCpcStr = !effectiveMetaConnected
     ? (language === 'tr' ? 'Bağlantı Bekleniyor' : 'Pending Connect')
     : validCpc.length > 0
     ? formatCurrency(validCpc.reduce((a, c) => a + c.cpc, 0) / validCpc.length, currency, { maximumFractionDigits: 2 })
@@ -161,7 +183,7 @@ export default function AdSpendSentinel({
 
         {/* Shield Status Badge & Rules Trigger */}
         <div className="flex items-center gap-2.5">
-          {!isMetaConnected ? (
+          {!effectiveMetaConnected ? (
             <button
               onClick={onOpenConnectMeta}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1877f2] hover:bg-[#166fe5] text-white text-xs font-semibold transition-colors"
@@ -220,7 +242,7 @@ export default function AdSpendSentinel({
       </div>
 
       {/* Meta Connection or High-Performance Scale Banner */}
-      {!isMetaConnected ? (
+      {!effectiveMetaConnected ? (
         <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#1877f2]/10 border border-[#1877f2]/20 flex items-center justify-center text-[#1877f2] shrink-0">
@@ -277,7 +299,7 @@ export default function AdSpendSentinel({
         <div className="p-3.5 rounded-xl border border-white/[0.06] bg-zinc-900/40">
           <span className="text-[11px] text-zinc-400 font-mono">{t.ads.activeCampaigns}</span>
           <div className="text-lg font-medium text-zinc-200 font-mono mt-0.5 tabular-nums">
-            {isMetaConnected ? `${activeCount} / ${campaigns.length}` : '0 / 0'}
+            {effectiveMetaConnected ? `${activeCount} / ${campaigns.length}` : '0 / 0'}
           </div>
         </div>
         <div className="p-3.5 rounded-xl border border-white/[0.06] bg-zinc-900/40">

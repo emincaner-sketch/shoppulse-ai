@@ -80,10 +80,14 @@ export default function AICoachSection({
     setIsTyping(true);
 
     try {
-      const response = await fetch('/api/ai/coach', {
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: textToSend, language }),
+        body: JSON.stringify({
+          prompt: textToSend,
+          language,
+          conversationHistory: newMsgs.slice(-6), // Send last 3 exchanges for context
+        }),
       });
 
       if (response.ok) {
@@ -94,32 +98,32 @@ export default function AICoachSection({
           return;
         }
       }
+
+      // If response was not ok, show error
+      const errData = await response.json().catch(() => ({}));
+      setChatMessages([
+        ...newMsgs,
+        {
+          role: 'assistant',
+          text: language === 'tr'
+            ? '⚠️ AI yanıtı alınamadı. Lütfen tekrar deneyin.'
+            : '⚠️ Could not get AI response. Please try again.',
+        },
+      ]);
     } catch (e) {
-      console.warn('API error, falling back to local heuristic:', e);
-    }
-
-    setTimeout(() => {
-      let reply = '';
-      if (textToSend.includes('dönüşüm') || textToSend.toLowerCase().includes('conversion') || textToSend.includes('satış') || textToSend.includes('order')) {
-        reply =
-          language === 'tr'
-            ? 'Nightfold DeepRest 3D Uyku Maskesi şu an canlı katalogda 36.714 adet stokla hazır bekliyor ancak henüz 0 sipariş kaydedilmiş. Temel tıkanıklık: Soğuk trafik hunisinde kanca (hook) eksikliği. TikTok ve Instagram Reels için "100% Karartma (Zero Light Leak)" temalı 3 saniyelik kreatif kancalar ve sepette "2. Ürüne %40 İndirim" uyku seti teklifi sunmalıyız.'
-            : 'Nightfold DeepRest 3D Sleep Mask is stocked with 36,714 units ready, but currently records 0 sales. The primary bottleneck is top-of-funnel ad hook resonance. We recommend launching 3-second TikTok hooks highlighting 100% Blackout / Zero Eye Pressure and introducing a "Buy 1, Get 2nd 40% Off" couples bundle.';
-      } else if (textToSend.includes('rakip') || textToSend.toLowerCase().includes('competitor') || textToSend.includes('manta')) {
-        reply =
-          language === 'tr'
-            ? 'Pazar lideri Manta Sleep PRO şu anda $39.99 seviyesinde fiyatlandırılmış durumda. Nightfold $34.99 liste fiyatıyla tam $5.00 net fiyat avantajına ve 3D derin göz oyukları (sıfır göz baskısı) ergonomisine sahip. Reklam kopyalarımızda bu $5 arbitrajı ve ergonomiyi vurgulamalıyız.'
-            : 'Key market benchmark Manta Sleep PRO is currently selling at $39.99. Nightfold at $34.99 commands a $5.00 immediate price arbitrage advantage plus zero-pressure 3D contoured eye cups. We should directly feature this value proposition in ad copy A/B tests.';
-      } else {
-        reply =
-          language === 'tr'
-            ? 'Nightfold Büyüme Direktörü Özeti: 36.714 adet stok ($1.28M potansiyel envanter değeri) aktif. İlk satış ivmesi için Meta Ads veya TikTok UGC kreatif testini başlatıp $34.99 tekli + $49.99 çiftli uyku seti paketini ana sayfada öne çıkaralım.'
-            : 'Nightfold Growth Director Summary: 36,714 units ($1.28M inventory pipeline) ready. To kickstart initial sales velocity, launch UGC ad creative testing on Meta/TikTok and feature a $49.99 Couples Sleep Bundle on the storefront hero.';
-      }
-
-      setChatMessages([...newMsgs, { role: 'assistant', text: reply }]);
+      console.warn('AI Chat API error:', e);
+      setChatMessages([
+        ...newMsgs,
+        {
+          role: 'assistant',
+          text: language === 'tr'
+            ? '⚠️ Bağlantı hatası oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin.'
+            : '⚠️ Connection error. Please check your internet and try again.',
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 600);
+    }
   };
 
   const getPriorityBadge = (priority: string) => {
