@@ -256,3 +256,18 @@ export const FETCH_ORDERS_QUERY = `
     }
   }
 `;
+
+/**
+ * Pre-built GraphQL query to fetch shop metadata (name, currency, domain)
+ */
+export const FETCH_SHOP_QUERY = `
+  query FetchShopDetails {
+    shop {
+      name
+      email
+      myshopifyDomain
+      currencyCode
+    }
+  }
+`;
+

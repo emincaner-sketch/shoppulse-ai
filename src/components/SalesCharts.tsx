@@ -20,9 +20,19 @@ interface SalesChartsProps {
   data: SalesDataPoint[];
   language: Language;
   currency?: Currency;
+  isLive?: boolean;
+  liveProductsCount?: number;
+  liveOrdersCount?: number;
 }
 
-export default function SalesCharts({ data, language, currency = 'USD' }: SalesChartsProps) {
+export default function SalesCharts({
+  data,
+  language,
+  currency = 'USD',
+  isLive = false,
+  liveProductsCount = 0,
+  liveOrdersCount = 0,
+}: SalesChartsProps) {
   const t = translations[language];
 
   // Mathematically scale the chart values according to the chosen currency rate
@@ -34,13 +44,21 @@ export default function SalesCharts({ data, language, currency = 'USD' }: SalesC
     }));
   }, [data, currency]);
 
-  const funnelSteps = [
-    { name: t.charts.sessions, count: 12450, pct: '100%', drop: null, icon: Users },
-    { name: t.charts.productViews, count: 7820, pct: '62.8%', drop: '-37.2%', icon: Eye },
-    { name: t.charts.addToCart, count: 1180, pct: '15.1%', drop: '-84.9%', icon: ShoppingBag },
-    { name: t.charts.checkout, count: 490, pct: '41.5%', drop: '-58.5%', icon: CreditCard },
-    { name: t.charts.purchased, count: 382, pct: '77.9%', drop: '-22.1%', icon: CheckCircle },
-  ];
+  const funnelSteps = isLive && liveOrdersCount === 0
+    ? [
+        { name: t.charts.sessions, count: 0, pct: '100%', drop: null, icon: Users },
+        { name: t.charts.productViews, count: 0, pct: '0%', drop: null, icon: Eye },
+        { name: t.charts.addToCart, count: 0, pct: '0%', drop: null, icon: ShoppingBag },
+        { name: t.charts.checkout, count: 0, pct: '0%', drop: null, icon: CreditCard },
+        { name: t.charts.purchased, count: 0, pct: '0%', drop: null, icon: CheckCircle },
+      ]
+    : [
+        { name: t.charts.sessions, count: 12450, pct: '100%', drop: null, icon: Users },
+        { name: t.charts.productViews, count: 7820, pct: '62.8%', drop: '-37.2%', icon: Eye },
+        { name: t.charts.addToCart, count: 1180, pct: '15.1%', drop: '-84.9%', icon: ShoppingBag },
+        { name: t.charts.checkout, count: 490, pct: '41.5%', drop: '-58.5%', icon: CreditCard },
+        { name: t.charts.purchased, count: 382, pct: '77.9%', drop: '-22.1%', icon: CheckCircle },
+      ];
 
   const currencySymbol = getCurrencySymbol(currency);
 
@@ -127,12 +145,18 @@ export default function SalesCharts({ data, language, currency = 'USD' }: SalesC
 
         <div className="flex items-center justify-between border-t border-white/[0.06] pt-3 text-[11px] text-zinc-400 font-mono">
           <span>
-            {language === 'tr'
-              ? `En Yüksek Satış Saati: 18:00 (${formatCurrency(1340, currency)})`
-              : `Peak Sales Window: 18:00 (${formatCurrency(1340, currency)})`}
+            {isLive && liveOrdersCount === 0
+              ? (language === 'tr'
+                  ? 'Shopify Canlı API Bağlantısı: Aktif'
+                  : 'Shopify Live API Stream: Active')
+              : (language === 'tr'
+                  ? `En Yüksek Satış Saati: 18:00 (${formatCurrency(1340, currency)})`
+                  : `Peak Sales Window: 18:00 (${formatCurrency(1340, currency)})`)}
           </span>
           <span className="text-zinc-300 font-medium">
-            {language === 'tr' ? 'Günlük Hedef: %114' : 'Target Pacing: 114%'}
+            {isLive && liveOrdersCount === 0
+              ? (language === 'tr' ? 'İlk Canlı Sipariş Bekleniyor' : 'Awaiting First Order')
+              : (language === 'tr' ? 'Günlük Hedef: %114' : 'Target Pacing: 114%')}
           </span>
         </div>
       </div>
@@ -143,7 +167,9 @@ export default function SalesCharts({ data, language, currency = 'USD' }: SalesC
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-zinc-100">{t.charts.funnelTitle}</h3>
             <span className="px-2 py-0.5 rounded bg-emerald-500/[0.08] text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-medium">
-              %3.2 CR
+              {isLive && liveOrdersCount === 0
+                ? (language === 'tr' ? 'Veri Bekleniyor' : 'Awaiting Data')
+                : '%3.2 CR'}
             </span>
           </div>
 
@@ -168,7 +194,11 @@ export default function SalesCharts({ data, language, currency = 'USD' }: SalesC
                   <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-zinc-400 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.max(12, 100 - idx * 20)}%` }}
+                      style={{
+                        width: isLive && liveOrdersCount === 0
+                          ? '0%'
+                          : `${Math.max(12, 100 - idx * 20)}%`
+                      }}
                     />
                   </div>
                 </div>
@@ -178,11 +208,19 @@ export default function SalesCharts({ data, language, currency = 'USD' }: SalesC
         </div>
 
         <div className="mt-4 p-3 rounded-lg bg-zinc-900/60 border border-white/[0.06] text-[11px] text-zinc-300">
-          <p className="font-medium text-zinc-200 mb-0.5">{language === 'tr' ? 'Optimizasyon Notu' : 'Optimization Note'}</p>
+          <p className="font-medium text-zinc-200 mb-0.5">
+            {isLive && liveOrdersCount === 0
+              ? (language === 'tr' ? 'Canlı Akış Durumu' : 'Live Stream Status')
+              : (language === 'tr' ? 'Optimizasyon Notu' : 'Optimization Note')}
+          </p>
           <p className="text-zinc-400 text-[10px] leading-relaxed">
-            {language === 'tr'
-              ? 'Sepete ekleyenlerin %58.5\'i ödeme adımında ayrılıyor. Ürün sayfasında "Ücretsiz Kargo" eşik sayacı önerilir.'
-              : '58.5% of cart additions drop off before checkout. Add a "Free Shipping Threshold" progress bar on product pages.'}
+            {isLive && liveOrdersCount === 0
+              ? (language === 'tr'
+                  ? 'Shopify mağazanız doğrudan Admin API ile senkronize edildi. Gerçek müşteriler ziyaret edip sipariş verdikçe hunideki tüm basamaklar gerçek zamanlı akacaktır.'
+                  : 'Your Shopify store is directly synced via Admin API. As customers visit and complete orders, each funnel stage will update dynamically in real time.')
+              : (language === 'tr'
+                  ? 'Sepete ekleyenlerin %58.5\'i ödeme adımında ayrılıyor. Ürün sayfasında "Ücretsiz Kargo" eşik sayacı önerilir.'
+                  : '58.5% of cart additions drop off before checkout. Add a "Free Shipping Threshold" progress bar on product pages.')}
           </p>
         </div>
       </div>

@@ -77,12 +77,77 @@ export default function Home() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [planModalReason, setPlanModalReason] = useState<string | undefined>(undefined);
 
+  // Live Store & Real Shopify Metrics State
+  const [isLiveStore, setIsLiveStore] = useState(false);
+  const [liveStoreData, setLiveStoreData] = useState<Store | null>(null);
+  const [liveStoreProducts, setLiveStoreProducts] = useState<Product[]>([]);
+  const [liveStoreActionCards, setLiveStoreActionCards] = useState<ActionCard[]>([]);
+  const [liveStoreCompetitors, setLiveStoreCompetitors] = useState<CompetitorStore[]>([]);
+  const [liveStoreAdCampaigns, setLiveStoreAdCampaigns] = useState<AdCampaign[]>([]);
+  const [liveMetrics, setLiveMetrics] = useState<{
+    todaySales: number;
+    todayOrders: number;
+    totalOrders: number;
+    totalSales: number;
+  } | null>(null);
+
   // Store 90-Day Asynchronous Sync State
   const [syncStatus, setSyncStatus] = useState<'IDLE' | 'SYNCING' | 'READY' | 'FAILED'>('READY');
   const [syncProgress, setSyncProgress] = useState(100);
-  const [stageLabelTr, setStageLabelTr] = useState('Son 90 günlük veri eşitlendi (1,420 sipariş, 148 ürün)');
-  const [stageLabelEn, setStageLabelEn] = useState('Last 90 days data synced (1,420 orders, 148 products)');
+  const [stageLabelTr, setStageLabelTr] = useState('Shopify Canlı API Senkronize Edildi');
+  const [stageLabelEn, setStageLabelEn] = useState('Shopify Live API Synced');
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Auto-sync with live Shopify Custom App on page load
+  useEffect(() => {
+    async function loadLiveStore() {
+      try {
+        const res = await fetch('/api/shopify/custom-app/sync');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.isLive && data.store) {
+            setIsLiveStore(true);
+            setLiveStoreData(data.store);
+            setCurrentStore(data.store);
+            setStores((prev) => {
+              const filtered = prev.filter((s) => s.domain !== data.store.domain);
+              return [data.store, ...filtered];
+            });
+            if (Array.isArray(data.products) && data.products.length > 0) {
+              setProducts(data.products);
+              setLiveStoreProducts(data.products);
+            }
+            if (Array.isArray(data.actionCards) && data.actionCards.length > 0) {
+              setActionCards(data.actionCards);
+              setLiveStoreActionCards(data.actionCards);
+            }
+            if (Array.isArray(data.competitors) && data.competitors.length > 0) {
+              setCompetitors(data.competitors);
+              setLiveStoreCompetitors(data.competitors);
+            }
+            if (Array.isArray(data.adCampaigns) && data.adCampaigns.length > 0) {
+              setAdCampaigns(data.adCampaigns);
+              setLiveStoreAdCampaigns(data.adCampaigns);
+            }
+            if (data.metrics) {
+              setLiveMetrics(data.metrics);
+            }
+            setSyncStatus('READY');
+            setStageLabelTr(
+              `Shopify Canlı API Senkronize: ${data.store.name} (${data.productsCount} ürün, ${data.ordersCount} sipariş)`
+            );
+            setStageLabelEn(
+              `Shopify Live API Synced: ${data.store.name} (${data.productsCount} products, ${data.ordersCount} orders)`
+            );
+          }
+        }
+      } catch (err) {
+        console.warn('Initial live store sync check:', err);
+      }
+    }
+
+    loadLiveStore();
+  }, []);
 
   // Sync theme class to html/body
   useEffect(() => {
@@ -98,6 +163,15 @@ export default function Home() {
   // Action handlers
   const handleSelectStore = (store: Store) => {
     setCurrentStore(store);
+    if (liveStoreData && store.domain === liveStoreData.domain) {
+      setIsLiveStore(true);
+      if (liveStoreProducts.length > 0) setProducts(liveStoreProducts);
+      if (liveStoreActionCards.length > 0) setActionCards(liveStoreActionCards);
+      if (liveStoreCompetitors.length > 0) setCompetitors(liveStoreCompetitors);
+      if (liveStoreAdCampaigns.length > 0) setAdCampaigns(liveStoreAdCampaigns);
+      return;
+    }
+    setIsLiveStore(false);
     const initialData = getStoreInitialData(store.id);
     setProducts(initialData.products);
     setActionCards(initialData.actionCards);
@@ -334,13 +408,44 @@ export default function Home() {
       const customAppRes = await fetch('/api/shopify/custom-app/sync');
       if (customAppRes.ok) {
         const liveData = await customAppRes.json();
-        if (liveData.isLive && Array.isArray(liveData.products) && liveData.products.length > 0) {
-          setProducts(liveData.products);
+        if (liveData.isLive) {
+          setIsLiveStore(true);
+          if (liveData.store) {
+            setLiveStoreData(liveData.store);
+            setCurrentStore(liveData.store);
+            setStores((prev) => {
+              const filtered = prev.filter((s) => s.domain !== liveData.store.domain);
+              return [liveData.store, ...filtered];
+            });
+          }
+          if (Array.isArray(liveData.products) && liveData.products.length > 0) {
+            setProducts(liveData.products);
+            setLiveStoreProducts(liveData.products);
+          }
+          if (Array.isArray(liveData.actionCards) && liveData.actionCards.length > 0) {
+            setActionCards(liveData.actionCards);
+            setLiveStoreActionCards(liveData.actionCards);
+          }
+          if (Array.isArray(liveData.competitors) && liveData.competitors.length > 0) {
+            setCompetitors(liveData.competitors);
+            setLiveStoreCompetitors(liveData.competitors);
+          }
+          if (Array.isArray(liveData.adCampaigns) && liveData.adCampaigns.length > 0) {
+            setAdCampaigns(liveData.adCampaigns);
+            setLiveStoreAdCampaigns(liveData.adCampaigns);
+          }
+          if (liveData.metrics) {
+            setLiveMetrics(liveData.metrics);
+          }
           setSyncProgress(100);
           setSyncStatus('READY');
           setIsSyncing(false);
-          setStageLabelTr(`Shopify API Canlı Verisi Eşitlendi (${liveData.ordersCount} sipariş, ${liveData.productsCount} ürün)`);
-          setStageLabelEn(`Live Shopify API Data Synced (${liveData.ordersCount} orders, ${liveData.productsCount} products)`);
+          setStageLabelTr(
+            `Shopify API Canlı Verisi Eşitlendi (${liveData.ordersCount} sipariş, ${liveData.productsCount} ürün)`
+          );
+          setStageLabelEn(
+            `Live Shopify API Data Synced (${liveData.ordersCount} orders, ${liveData.productsCount} products)`
+          );
           return;
         }
       }
@@ -459,7 +564,13 @@ export default function Home() {
         {activeTab === 'overview' && (
           <div className="space-y-8 animate-in fade-in duration-200">
             {/* Hero KPIs */}
-            <KPICards language={language} currency={currency} storeId={currentStore.id} />
+            <KPICards
+              language={language}
+              currency={currency}
+              storeId={currentStore.id}
+              isLive={isLiveStore}
+              liveMetrics={liveMetrics || undefined}
+            />
 
             {/* AI Growth Copilot (with +10px vertical breathing room) */}
             <div className="pt-2">
@@ -478,7 +589,16 @@ export default function Home() {
             {/* Hourly Sales & ROAS Trend + Conversion Funnel */}
             <SalesCharts
               data={
-                currentStore.id === 'store-2'
+                isLiveStore && liveMetrics?.todaySales === 0
+                  ? [
+                      { time: '00:00', todaySales: 0, lastWeekSales: 0, todayRoas: 0, lastWeekRoas: 0 },
+                      { time: '04:00', todaySales: 0, lastWeekSales: 0, todayRoas: 0, lastWeekRoas: 0 },
+                      { time: '08:00', todaySales: 0, lastWeekSales: 0, todayRoas: 0, lastWeekRoas: 0 },
+                      { time: '12:00', todaySales: 0, lastWeekSales: 0, todayRoas: 0, lastWeekRoas: 0 },
+                      { time: '16:00', todaySales: 0, lastWeekSales: 0, todayRoas: 0, lastWeekRoas: 0 },
+                      { time: '20:00', todaySales: 0, lastWeekSales: 0, todayRoas: 0, lastWeekRoas: 0 },
+                    ]
+                  : currentStore.id === 'store-2'
                   ? MOCK_HOURLY_SALES.map((d) => ({
                       ...d,
                       todaySales: Math.round(d.todaySales * 0.55),
@@ -488,6 +608,9 @@ export default function Home() {
               }
               language={language}
               currency={currency}
+              isLive={isLiveStore}
+              liveProductsCount={products.length}
+              liveOrdersCount={liveMetrics?.totalOrders ?? 0}
             />
 
             {/* BCG Matrix */}
