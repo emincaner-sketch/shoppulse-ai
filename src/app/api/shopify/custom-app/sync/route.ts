@@ -91,24 +91,29 @@ async function processShopifySync(customConfig: {
     if (mainProd.inventory > 500) {
       actionCards.push({
         id: 'action-live-1',
+        storeId: `store-${cleanDomain.replace(/[^a-zA-Z0-9]/g, '-')}`,
         category: 'INVENTORY',
-        urgency: 'MEDIUM',
+        priority: 'P2_MEDIUM',
         status: 'PENDING',
         title: {
           tr: `${shortTitle} — Yüksek Stok & Bestseller Fırsatı`,
           en: `${shortTitle} — High Inventory Volume Opportunity`,
         },
-        impact: {
-          tr: '+$1,450 / hafta',
-          en: '+$1,450 / week',
-        },
         description: {
           tr: `Katalogda ${mainProd.inventory.toLocaleString()} adet stok mevcut. $${mainProd.retailPrice} fiyat noktasıyla Meta / TikTok reklam bütçesini ölçeklendirerek satış hızını artırabilirsiniz.`,
           en: `You have ${mainProd.inventory.toLocaleString()} units in stock. Scale Meta / TikTok ad spend around the $${mainProd.retailPrice} price point to accelerate sales velocity.`,
         },
-        reasoning: {
+        rationale: {
           tr: 'Yüksek envanter maliyetini ciroya dönüştürmek için sepet artırıcı bundle (ikili alımda indirim) stratejisi öneriliyor.',
           en: 'Converting inventory into liquidity via bundle pricing is highly recommended.',
+        },
+        impactEstimate: {
+          tr: '+$1,450 / hafta',
+          en: '+$1,450 / week',
+        },
+        suggestedActionText: {
+          tr: 'Reklam Bütçesini Ölçekle',
+          en: 'Scale Ad Budget',
         },
         payload: {
           productId: mainProd.id,
@@ -120,24 +125,29 @@ async function processShopifySync(customConfig: {
     const suggestedPrice = Math.round(mainProd.retailPrice * 1.08 * 100) / 100;
     actionCards.push({
       id: 'action-live-2',
+      storeId: `store-${cleanDomain.replace(/[^a-zA-Z0-9]/g, '-')}`,
       category: 'PRICING',
-      urgency: 'HIGH',
+      priority: 'P1_HIGH',
       status: 'PENDING',
       title: {
         tr: `${shortTitle} — Fiyat Arbitrajı & Marj Artışı`,
         en: `${shortTitle} — Pricing Arbitrage & Margin Expansion`,
       },
-      impact: {
-        tr: `+%8 Marj ($${suggestedPrice})`,
-        en: `+%8 Margin ($${suggestedPrice})`,
-      },
       description: {
         tr: `Mevcut $${mainProd.retailPrice} fiyatı, pazar talebi ve yüksek stok güvenliği göz önüne alındığında $${suggestedPrice} seviyesine optimize edilebilir.`,
         en: `Your current price of $${mainProd.retailPrice} can be safely lifted to $${suggestedPrice} without conversion drop.`,
       },
-      reasoning: {
+      rationale: {
         tr: 'Yüksek envanter ve premium algı marjı kaldırabilir.',
         en: 'High inventory and premium positioning allow margin expansion.',
+      },
+      impactEstimate: {
+        tr: `+%8 Marj ($${suggestedPrice})`,
+        en: `+%8 Margin ($${suggestedPrice})`,
+      },
+      suggestedActionText: {
+        tr: `Fiyatı $${suggestedPrice}'e Yükselt`,
+        en: `Increase Price to $${suggestedPrice}`,
       },
       payload: {
         productId: mainProd.id,
@@ -147,24 +157,29 @@ async function processShopifySync(customConfig: {
 
     actionCards.push({
       id: 'action-live-3',
+      storeId: `store-${cleanDomain.replace(/[^a-zA-Z0-9]/g, '-')}`,
       category: 'CATALOG',
-      urgency: 'LOW',
+      priority: 'P3_LOW',
       status: 'PENDING',
       title: {
         tr: `${shortTitle} — AI Başlık ve Açıklama Optimizasyonu`,
         en: `${shortTitle} — AI Title & Copy Optimization`,
       },
-      impact: {
-        tr: '+%32 Dönüşüm Oranı',
-        en: '+%32 Conversion Lift',
-      },
       description: {
         tr: `Ürün açıklamasında ve başlığında 3D ergonomi ve tam karartma anahtar kelimelerini öne çıkararak organik dönüşümü artırın.`,
         en: `Highlight 3D ergonomics and blackout features to boost organic conversion.`,
       },
-      reasoning: {
+      rationale: {
         tr: 'Arama terimlerinde ilk sayfada yer almak organik sepet ekleme oranını artırır.',
         en: 'First page search keyword relevancy drives organic add-to-cart rate.',
+      },
+      impactEstimate: {
+        tr: '+%32 Dönüşüm Oranı',
+        en: '+%32 Conversion Lift',
+      },
+      suggestedActionText: {
+        tr: 'AI İçeriğini Optimize Et',
+        en: 'Optimize AI Content',
       },
       payload: {
         productId: mainProd.id,

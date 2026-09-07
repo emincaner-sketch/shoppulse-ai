@@ -133,6 +133,12 @@ export default function KPICards({
         },
       ];
 
+  const getSafeCardText = (val: any) => {
+    if (!val) return '';
+    if (typeof val === 'object') return val[language] || val.tr || val.en || '';
+    return String(val);
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card) => {
@@ -143,7 +149,7 @@ export default function KPICards({
             className="rounded-xl border border-white/[0.08] bg-[#121215] p-5 shadow-sm transition-colors hover:border-white/[0.14]"
           >
             <div className="flex items-center justify-between mb-2.5">
-              <span className="text-xs font-medium text-zinc-300">{card.title}</span>
+              <span className="text-xs font-medium text-zinc-300">{getSafeCardText(card.title)}</span>
               <div className="p-1.5 rounded-md bg-zinc-850 border border-white/[0.06] text-zinc-300">
                 <Icon className="w-3.5 h-3.5" />
               </div>
@@ -155,12 +161,12 @@ export default function KPICards({
               </div>
               <div className="flex items-center gap-0.5 text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tabular-nums">
                 <ArrowUpRight className="w-3 h-3" />
-                <span>{card.trend}</span>
+                <span>{getSafeCardText(card.trend)}</span>
               </div>
             </div>
 
             <div className="mt-3 flex items-center justify-between text-xs text-zinc-400 border-t border-white/[0.08] pt-2.5 tabular-nums">
-              <span>{card.subtext}</span>
+              <span>{getSafeCardText(card.subtext)}</span>
               <span className="text-zinc-400 font-medium">Shopify API</span>
             </div>
           </div>

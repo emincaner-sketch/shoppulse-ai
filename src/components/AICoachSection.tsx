@@ -25,6 +25,15 @@ interface AICoachSectionProps {
   onOpenContentModal: (productId: string) => void;
 }
 
+function getSafeText(field: any, lang: Language, fallback = ''): string {
+  if (!field) return fallback;
+  if (typeof field === 'string') return field;
+  if (typeof field === 'object') {
+    return field[lang] || field.tr || field.en || fallback;
+  }
+  return String(field);
+}
+
 export default function AICoachSection({
   cards,
   language,
@@ -197,12 +206,12 @@ export default function AICoachSection({
 
                 {/* Title */}
                 <h3 className="text-xs sm:text-sm font-semibold text-zinc-100 leading-snug mb-2">
-                  {card.title[language]}
+                  {getSafeText(card.title, language, language === 'tr' ? 'Büyüme Fırsatı' : 'Growth Opportunity')}
                 </h3>
 
                 {/* Description - readable text-zinc-300 */}
                 <p className="text-xs text-zinc-300/90 leading-relaxed mb-3">
-                  {card.description[language]}
+                  {getSafeText(card.description, language, '')}
                 </p>
 
                 {/* Rationale box with horizontal divider border-t */}
@@ -212,7 +221,7 @@ export default function AICoachSection({
                     <span>{t.aiCoach.rationale}:</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-relaxed">
-                    {card.rationale[language]}
+                    {getSafeText(card.rationale || (card as any).reasoning, language, '')}
                   </p>
                 </div>
               </div>
@@ -222,7 +231,7 @@ export default function AICoachSection({
                 <div className="flex items-center justify-between mb-3 text-xs">
                   <span className="text-zinc-400 font-medium">{t.aiCoach.impact}:</span>
                   <span className="font-mono text-emerald-400 font-semibold text-xs">
-                    {card.impactEstimate[language]}
+                    {getSafeText(card.impactEstimate || (card as any).impact, language, '+%15')}
                   </span>
                 </div>
 
@@ -236,7 +245,13 @@ export default function AICoachSection({
                     onClick={() => handleApplyClick(card)}
                     className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 text-xs font-medium transition-colors active:scale-95 shadow-sm"
                   >
-                    <span>{card.suggestedActionText[language]}</span>
+                    <span>
+                      {getSafeText(
+                        card.suggestedActionText,
+                        language,
+                        language === 'tr' ? 'Aksiyonu Uygula' : 'Apply Action'
+                      )}
+                    </span>
                     <ArrowRight className="w-3 h-3 text-zinc-900" />
                   </button>
                 )}
