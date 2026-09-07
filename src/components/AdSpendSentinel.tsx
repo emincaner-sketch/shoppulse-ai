@@ -24,6 +24,8 @@ interface AdSpendSentinelProps {
   campaigns: AdCampaign[];
   language: Language;
   currency?: Currency;
+  isMetaConnected?: boolean;
+  onOpenConnectMeta?: () => void;
   onToggleCampaignStatus: (campaignId: string) => void;
   onScaleCampaignBudget?: (campaignId: string, newBudget: number) => void;
 }
@@ -32,6 +34,8 @@ export default function AdSpendSentinel({
   campaigns,
   language,
   currency = 'USD',
+  isMetaConnected = false,
+  onOpenConnectMeta,
   onToggleCampaignStatus,
   onScaleCampaignBudget,
 }: AdSpendSentinelProps) {
@@ -48,7 +52,7 @@ export default function AdSpendSentinel({
   const [loadingCampaignId, setLoadingCampaignId] = useState<string | null>(null);
   const [scaledSuccess, setScaledSuccess] = useState(false);
   const [showWasteBreakdown, setShowWasteBreakdown] = useState(false);
-  const [adWasteSaved, setAdWasteSaved] = useState(420);
+  const [adWasteSaved, setAdWasteSaved] = useState(isMetaConnected ? 420 : 0);
 
   // Filter campaigns
   const filteredCampaigns = campaigns.filter((c) => {
@@ -56,8 +60,22 @@ export default function AdSpendSentinel({
     return c.platform === platformFilter;
   });
 
-  const totalSpend = campaigns.reduce((acc, c) => acc + c.spendToday, 0);
-  const activeCount = campaigns.filter((c) => c.status === 'ACTIVE').length;
+  const totalSpend = isMetaConnected ? campaigns.reduce((acc, c) => acc + c.spendToday, 0) : 0;
+  const activeCount = isMetaConnected ? campaigns.filter((c) => c.status === 'ACTIVE').length : 0;
+
+  const validRoas = campaigns.filter((c) => c.roasToday > 0);
+  const avgRoasStr = !isMetaConnected
+    ? (language === 'tr' ? 'Bağlantı Bekleniyor' : 'Pending Connect')
+    : validRoas.length > 0
+    ? `${(validRoas.reduce((a, c) => a + c.roasToday, 0) / validRoas.length).toFixed(2)}x`
+    : (language === 'tr' ? 'İlk Harcama Bekleniyor' : 'Awaiting Spend');
+
+  const validCpc = campaigns.filter((c) => c.cpc > 0);
+  const avgCpcStr = !isMetaConnected
+    ? (language === 'tr' ? 'Bağlantı Bekleniyor' : 'Pending Connect')
+    : validCpc.length > 0
+    ? formatCurrency(validCpc.reduce((a, c) => a + c.cpc, 0) / validCpc.length, currency, { maximumFractionDigits: 2 })
+    : (language === 'tr' ? 'Veri Bekleniyor' : 'Awaiting Data');
 
   const handleToggle = async (campaign: AdCampaign) => {
     setLoadingCampaignId(campaign.id);
@@ -143,6 +161,21 @@ export default function AdSpendSentinel({
 
         {/* Shield Status Badge & Rules Trigger */}
         <div className="flex items-center gap-2.5">
+          {!isMetaConnected ? (
+            <button
+              onClick={onOpenConnectMeta}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1877f2] hover:bg-[#166fe5] text-white text-xs font-semibold transition-colors"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>{language === 'tr' ? 'Meta Ads Bağla' : 'Connect Meta'}</span>
+            </button>
+          ) : (
+            <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1877f2]/10 border border-[#1877f2]/20 text-[#1877f2] text-xs font-mono font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{language === 'tr' ? 'Meta Bağlı' : 'Meta Connected'}</span>
+            </span>
+          )}
+
           <button
             onClick={() => setRulesModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-transparent text-zinc-300 hover:text-white text-xs font-medium transition-colors"
@@ -186,63 +219,74 @@ export default function AdSpendSentinel({
         </div>
       </div>
 
-      {/* High-Performance Scale Opportunity Banner */}
-      <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-950/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5 text-zinc-200">
-          <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>
-            {language === 'tr'
-              ? `⚡ DABA Dynamic Retargeting kampanyası 5.6x ROAS ile çalışıyor. Günlük bütçeyi ${formatCurrency(60, currency)}'tan ${formatCurrency(75, currency)}'e çıkararak karlı şekilde ölçekleyebilirsiniz.`
-              : `⚡ DABA Dynamic Retargeting is hitting 5.6x ROAS. Safely scale daily budget from ${formatCurrency(60, currency)} to ${formatCurrency(75, currency)} for incremental profit.`}
-          </span>
-        </div>
-
-        <div className="shrink-0 self-end sm:self-center">
+      {/* Meta Connection or High-Performance Scale Banner */}
+      {!isMetaConnected ? (
+        <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#1877f2]/10 border border-[#1877f2]/20 flex items-center justify-center text-[#1877f2] shrink-0">
+              <Zap className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-semibold text-white">
+                {language === 'tr' ? 'Meta Ads Bağlantısı Bekleniyor' : 'Meta Ads Connection Pending'}
+              </div>
+              <p className="text-zinc-400 text-[11px] mt-0.5">
+                {language === 'tr'
+                  ? 'Canlı harcama, CPC/CTR ve ROAS sızıntı kalkanını aktif etmek için Meta Business hesabınızı bağlayın.'
+                  : 'Connect your Meta Business account to activate live spend tracking, CPC/CTR, and Sentinel budget defense.'}
+              </p>
+            </div>
+          </div>
           <button
-            onClick={handleScaleBudget}
-            disabled={scaledSuccess}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs font-medium transition-all ${
-              scaledSuccess
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 cursor-default'
-                : 'bg-emerald-400 text-zinc-950 hover:bg-emerald-300'
-            }`}
+            onClick={onOpenConnectMeta}
+            className="px-3.5 py-1.5 rounded-lg bg-[#1877f2] hover:bg-[#166fe5] text-white text-xs font-semibold shrink-0 transition-colors"
           >
-            {scaledSuccess ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{language === 'tr' ? `Bütçe Ölçeklendi (${formatCurrency(75, currency)}/gün) ✓` : `Scaled (${formatCurrency(75, currency)}/day) ✓`}</span>
-              </>
-            ) : (
-              <>
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>{language === 'tr' ? `+%'25 Bütçe Ölçekle (${formatCurrency(60, currency)} → ${formatCurrency(75, currency)})` : `+25% Scale (${formatCurrency(60, currency)} → ${formatCurrency(75, currency)})`}</span>
-              </>
-            )}
+            {language === 'tr' ? 'Meta Ads Bağla' : 'Connect Meta Ads'}
           </button>
         </div>
-      </div>
+      ) : (
+        <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-950/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-zinc-200">
+            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              {language === 'tr'
+                ? '🛡️ Sentinel Bütçe Kalkanı Devrede: Stok 5 adedin altına düştüğünde veya ROAS hedef altına indiğinde reklamlar otomatik korunur.'
+                : '🛡️ Sentinel Spend Shield Active: Auto-pauses campaigns if stock falls below threshold or ROAS drops.'}
+            </span>
+          </div>
+          <div className="text-[11px] font-mono text-emerald-400 font-medium shrink-0">
+            {language === 'tr' ? 'Otomatik Kalkan Aktif ✓' : 'Protection Engaged ✓'}
+          </div>
+        </div>
+      )}
 
       {/* Mini Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3.5 rounded-xl border border-white/[0.06] bg-zinc-900/40">
           <span className="text-[11px] text-zinc-400 font-mono">{t.ads.spendToday}</span>
-          <div className="text-lg font-medium text-white font-mono mt-0.5 tabular-nums">{formatCurrency(totalSpend, currency)}</div>
+          <div className="text-lg font-medium text-white font-mono mt-0.5 tabular-nums">
+            {formatCurrency(totalSpend, currency)}
+          </div>
         </div>
         <div className="p-3.5 rounded-xl border border-white/[0.06] bg-zinc-900/40">
           <span className="text-[11px] text-zinc-400 font-mono">{t.ads.blendedRoas}</span>
-          <div className="text-lg font-medium text-emerald-400 font-mono mt-0.5 tabular-nums">3.42x</div>
+          <div className="text-lg font-medium text-emerald-400 font-mono mt-0.5 tabular-nums">
+            {avgRoasStr}
+          </div>
         </div>
         <div className="p-3.5 rounded-xl border border-white/[0.06] bg-zinc-900/40">
           <span className="text-[11px] text-zinc-400 font-mono">{t.ads.activeCampaigns}</span>
           <div className="text-lg font-medium text-zinc-200 font-mono mt-0.5 tabular-nums">
-            {activeCount} / {campaigns.length}
+            {isMetaConnected ? `${activeCount} / ${campaigns.length}` : '0 / 0'}
           </div>
         </div>
         <div className="p-3.5 rounded-xl border border-white/[0.06] bg-zinc-900/40">
           <span className="text-[11px] text-zinc-400 font-mono">
             {language === 'tr' ? 'Ortalama CPC' : 'Average CPC'}
           </span>
-          <div className="text-lg font-medium text-zinc-200 font-mono mt-0.5 tabular-nums">{formatCurrency(0.48, currency, { maximumFractionDigits: 2 })}</div>
+          <div className="text-lg font-medium text-zinc-200 font-mono mt-0.5 tabular-nums">
+            {avgCpcStr}
+          </div>
         </div>
       </div>
 

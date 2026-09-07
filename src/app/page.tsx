@@ -40,6 +40,8 @@ import ConnectStoreModal from '@/components/ConnectStoreModal';
 import AIContentModal from '@/components/AIContentModal';
 import PlanManagementModal, { PlanTier } from '@/components/PlanManagementModal';
 import SyncStatusBar from '@/components/SyncStatusBar';
+import CreativeStudioModal from '@/components/CreativeStudioModal';
+import ConnectMetaModal from '@/components/ConnectMetaModal';
 
 import {
   LayoutDashboard,
@@ -71,6 +73,10 @@ export default function Home() {
   // Modal States
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [contentModalProduct, setContentModalProduct] = useState<Product | null>(null);
+  const [isCreativeStudioOpen, setIsCreativeStudioOpen] = useState(false);
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
+  const [isMetaConnected, setIsMetaConnected] = useState(false);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
 
   // Monetization & Subscription State (Private Tool: All Features Unlocked)
   const [currentPlan, setCurrentPlan] = useState<PlanTier>('SCALE_ENTERPRISE');
@@ -149,14 +155,55 @@ export default function Home() {
     loadLiveStore();
   }, []);
 
-  // Sync theme class to html/body
+  // Check Meta Ads connection status on mount
   useEffect(() => {
-    if (theme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
+    async function checkMeta() {
+      try {
+        const res = await fetch('/api/meta/campaigns');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.isConnected) {
+            setIsMetaConnected(true);
+            if (Array.isArray(data.campaigns) && data.campaigns.length > 0) {
+              setAdCampaigns(data.campaigns);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Meta check:', err);
+      }
     }
-  }, [theme]);
+    checkMeta();
+  }, []);
+
+  // Growth Analyst real-time re-analysis powered by Gemini
+  const handleReanalyzeGrowth = async () => {
+    setIsReanalyzing(true);
+    try {
+      const res = await fetch('/api/ai/growth-analyst', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storeName: currentStore.name,
+          product: products[0]?.title || 'Nightfold DeepRest 3D Contoured Sleep Mask',
+          price: products[0]?.retailPrice || 34.99,
+          inventory: products[0]?.inventory || 36714,
+          orders: liveMetrics?.totalOrders ?? 0,
+          revenue: liveMetrics?.totalSales ?? 0,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.actionCards) && data.actionCards.length > 0) {
+          setActionCards(data.actionCards);
+        }
+      }
+    } catch (err) {
+      console.warn('Re-analyze error:', err);
+    } finally {
+      setIsReanalyzing(false);
+    }
+  };
 
   const t = translations[language];
 
@@ -520,6 +567,8 @@ export default function Home() {
         }}
         onTriggerSync={handleTriggerSync}
         isSyncing={isSyncing}
+        onOpenCreativeStudio={() => setIsCreativeStudioOpen(true)}
+        onOpenConnectMeta={() => setIsMetaModalOpen(true)}
       />
 
       {/* Asynchronous Store Sync Engine Status Banner */}
@@ -579,6 +628,8 @@ export default function Home() {
                 language={language}
                 onApplyAction={handleApplyAction}
                 onDismissAction={handleDismissAction}
+                onReanalyze={handleReanalyzeGrowth}
+                isReanalyzing={isReanalyzing}
                 onOpenContentModal={(pId) => {
                   const prod = products.find((p) => p.id === pId);
                   if (prod) setContentModalProduct(prod);
@@ -645,6 +696,8 @@ export default function Home() {
               campaigns={adCampaigns}
               language={language}
               currency={currency}
+              isMetaConnected={isMetaConnected}
+              onOpenConnectMeta={() => setIsMetaModalOpen(true)}
               onToggleCampaignStatus={handleToggleCampaignStatus}
               onScaleCampaignBudget={handleScaleCampaignBudget}
             />
@@ -667,6 +720,8 @@ export default function Home() {
               language={language}
               onApplyAction={handleApplyAction}
               onDismissAction={handleDismissAction}
+              onReanalyze={handleReanalyzeGrowth}
+              isReanalyzing={isReanalyzing}
               onOpenContentModal={(pId) => {
                 const prod = products.find((p) => p.id === pId);
                 if (prod) setContentModalProduct(prod);
@@ -728,6 +783,8 @@ export default function Home() {
               campaigns={adCampaigns}
               language={language}
               currency={currency}
+              isMetaConnected={isMetaConnected}
+              onOpenConnectMeta={() => setIsMetaModalOpen(true)}
               onToggleCampaignStatus={handleToggleCampaignStatus}
               onScaleCampaignBudget={handleScaleCampaignBudget}
             />
@@ -766,7 +823,7 @@ export default function Home() {
             <span>•</span>
             <span>Shopify Admin API</span>
             <span>•</span>
-            <span>Claude 3.5 & GPT-4o</span>
+            <span>Gemini 1.5 Pro / Flash</span>
           </div>
         </div>
       </footer>
@@ -794,6 +851,26 @@ export default function Home() {
         currentPlan={currentPlan}
         onPlanUpdated={(newPlan) => setCurrentPlan(newPlan)}
         triggerReason={planModalReason}
+      />
+
+      <CreativeStudioModal
+        isOpen={isCreativeStudioOpen}
+        onClose={() => setIsCreativeStudioOpen(false)}
+        productTitle={products[0]?.title || 'Nightfold DeepRest 3D Contoured Sleep Mask'}
+        price={products[0]?.retailPrice || 34.99}
+        language={language}
+      />
+
+      <ConnectMetaModal
+        isOpen={isMetaModalOpen}
+        onClose={() => setIsMetaModalOpen(false)}
+        language={language}
+        onConnected={(campaigns) => {
+          setIsMetaConnected(true);
+          if (Array.isArray(campaigns) && campaigns.length > 0) {
+            setAdCampaigns(campaigns);
+          }
+        }}
       />
     </div>
   );

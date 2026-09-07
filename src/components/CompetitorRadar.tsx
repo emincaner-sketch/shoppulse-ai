@@ -101,7 +101,7 @@ export default function CompetitorRadar({
       colors: ['#10b981', '#f59e0b', '#ffffff'],
     });
     if (onApplyArbitrage) {
-      onApplyArbitrage('Chelsea Bot', 139);
+      onApplyArbitrage('Nightfold DeepRest', 37.79);
     }
   };
 
@@ -202,20 +202,21 @@ export default function CompetitorRadar({
       )}
 
       {/* Stockout Arbitrage Opportunity Callout */}
+      {/* High-Impact Arbitrage Alert Box */}
       <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-950/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="flex items-start gap-2.5 text-zinc-200">
           <Flame className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           <div>
             <div className="font-medium text-amber-300 flex items-center gap-2">
-              <span>{language === 'tr' ? '⚡ Kritik Arbitraj Fırsatı Tespit Edildi' : '⚡ High-Impact Arbitrage Detected'}</span>
+              <span>{language === 'tr' ? '⚡ Manta Sleep Karşısında $5 Arbitraj Fırsatı' : '⚡ $5.00 Price Arbitrage vs Manta Sleep'}</span>
               <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-mono text-[10px]">
-                +{formatCurrency(1530, currency)} / {language === 'tr' ? 'Ay' : 'Mo'}
+                +{formatCurrency(1840, currency)} / {language === 'tr' ? 'Ay' : 'Mo'}
               </span>
             </div>
             <p className="text-zinc-300 mt-1 text-[11px] leading-relaxed">
               {language === 'tr'
-                ? `"ZaraStyle" mağazasında Chelsea Bot tükendi. Sizde 32 adet stok var. Fiyatı ${formatCurrency(129, currency)}'den ${formatCurrency(139, currency)}'a çıkararak sepet terk oranı artmadan net marjınızı genişletebilirsiniz.`
-                : `"ZaraStyle" stocked out on Chelsea Boots. You hold 32 units. Safely lift price from ${formatCurrency(129, currency)} to ${formatCurrency(139, currency)} to expand margins without hurting conversions.`}
+                ? `Pazar lideri "Manta Sleep PRO" benzer 3D ergonomik maskeyi $39.99'dan satıyor. Nightfold DeepRest ($34.99) olarak $5.00 fiyat avantajınız var. Fiyatınızı ${formatCurrency(37.79, currency)} seviyesine çekerek sipariş kaybetmeden ürün başına marjınızı +$2.80 artırabilirsiniz.`
+                : `Top competitor "Manta Sleep PRO" retails similar 3D contoured masks at $39.99. Nightfold ($34.99) holds a $5.00 price advantage. Safely lift your price to ${formatCurrency(37.79, currency)} to capture +$2.80 extra margin per unit.`}
             </p>
           </div>
         </div>
@@ -233,12 +234,12 @@ export default function CompetitorRadar({
             {arbitrageApplied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{language === 'tr' ? `Fiyat Güncellendi (${formatCurrency(139, currency)}) ✓` : `Price Updated (${formatCurrency(139, currency)}) ✓`}</span>
+                <span>{language === 'tr' ? `Fiyat Güncellendi (${formatCurrency(37.79, currency)}) ✓` : `Price Updated (${formatCurrency(37.79, currency)}) ✓`}</span>
               </>
             ) : (
               <>
                 <Zap className="w-3.5 h-3.5" />
-                <span>{language === 'tr' ? `Fiyatı Optimize Et (${formatCurrency(129, currency)} → ${formatCurrency(139, currency)})` : `Optimize Price (${formatCurrency(129, currency)} → ${formatCurrency(139, currency)})`}</span>
+                <span>{language === 'tr' ? `Fiyatı ${formatCurrency(37.79, currency)}'e Optimize Et` : `Optimize to ${formatCurrency(37.79, currency)}`}</span>
               </>
             )}
           </button>

@@ -32,6 +32,8 @@ interface NavbarProps {
   onOpenPlanModal?: () => void;
   onTriggerSync?: () => void;
   isSyncing?: boolean;
+  onOpenCreativeStudio?: () => void;
+  onOpenConnectMeta?: () => void;
 }
 
 export default function Navbar({
@@ -50,6 +52,8 @@ export default function Navbar({
   onOpenPlanModal,
   onTriggerSync,
   isSyncing = false,
+  onOpenCreativeStudio,
+  onOpenConnectMeta,
 }: NavbarProps) {
   const t = translations[language];
   const [storeDropdownOpen, setStoreDropdownOpen] = useState(false);
@@ -270,17 +274,28 @@ export default function Navbar({
                 </div>
                 <div className="py-2 space-y-2 text-xs">
                   <div className="p-2 rounded-lg bg-zinc-900/80 border border-white/[0.06]">
-                    <span className="text-[11px] font-medium text-rose-400 block mb-0.5">Stok Uyarısı</span>
-                    <p className="text-[10px] text-zinc-400">Merino Hırka için 3 günlük stok kaldı.</p>
+                    <span className="text-[11px] font-medium text-emerald-400 block mb-0.5">Stok & Katalog</span>
+                    <p className="text-[10px] text-zinc-400">Nightfold 3D Uyku Maskesi: 36.714 adet stok hazır.</p>
                   </div>
                   <div className="p-2 rounded-lg bg-zinc-900/80 border border-white/[0.06]">
-                    <span className="text-[11px] font-medium text-amber-400 block mb-0.5">Rakip Fiyatı</span>
-                    <p className="text-[10px] text-zinc-400">ZaraStyle fiyatı $59&apos;a çekti.</p>
+                    <span className="text-[11px] font-medium text-amber-400 block mb-0.5">Rakip Fiyat Radarı</span>
+                    <p className="text-[10px] text-zinc-400">Manta Sleep PRO $39.99 ($5 arbitraj avantajı aktif).</p>
                   </div>
                 </div>
               </div>
             )}
           </div>
+
+          {/* Creative Studio CTA Button */}
+          {onOpenCreativeStudio && (
+            <button
+              onClick={onOpenCreativeStudio}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-medium transition-all shadow-sm active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <span className="hidden sm:inline">{language === 'tr' ? 'İçerik Stüdyosu' : 'Creative Studio'}</span>
+            </button>
+          )}
 
           {/* Matte Refined White CTA Button (Linear / Stripe Style) */}
           <button

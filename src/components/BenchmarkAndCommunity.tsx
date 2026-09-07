@@ -44,7 +44,7 @@ export default function BenchmarkAndCommunity({
   // New post form state
   const [postTitle, setPostTitle] = useState('');
   const [postContent, setPostContent] = useState('');
-  const [postCategory, setPostCategory] = useState('DTC Moda & Aksesuar');
+  const [postCategory, setPostCategory] = useState('DTC Uyku & Sağlık');
   const [postTags, setPostTags] = useState('Büyüme, ROAS, Taktik');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -57,7 +57,7 @@ export default function BenchmarkAndCommunity({
   };
 
   const handleCopyReferral = () => {
-    navigator.clipboard.writeText('https://shoppulse.ai/invite/lumina-ref88');
+    navigator.clipboard.writeText('https://shoppulse.ai/invite/nightfold-ref88');
     setIsCopiedReferral(true);
     confetti({
       particleCount: 35,
@@ -97,7 +97,7 @@ export default function BenchmarkAndCommunity({
         // Local fallback
         const fallbackPost: CommunityPost = {
           id: `post-${Date.now()}`,
-          authorName: language === 'tr' ? 'Lumina Fashion Kurucusu' : 'Founder at Lumina Fashion',
+          authorName: language === 'tr' ? 'Nightfold Sleep Kurucusu' : 'Founder at Nightfold Sleep',
           authorStoreCategory: postCategory,
           authorBadge: language === 'tr' ? 'Doğrulanmış Satıcı' : 'Verified Merchant',
           verifiedRevenue: '$48K+ / Ay',

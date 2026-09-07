@@ -118,7 +118,7 @@ export const translations = {
     benchmarks: {
       title: 'Anonim Kategori Benchmarkları & Network Etkisi',
       subtitle: 'Sektörünüzdeki en başarılı mağazaların ortalamalarıyla kendi mağazanızı kıyaslayın.',
-      category: 'Sektör: Moda & Giyim',
+      category: 'Sektör: Uyku, Sağlık & Kişisel Bakım',
       yourStore: 'Sizin Mağazanız',
       categoryAvg: 'Sektör Ortalaması',
       percentile: 'Dilim',
@@ -276,7 +276,7 @@ export const translations = {
     benchmarks: {
       title: 'Anonymous Industry Benchmarks & Network Hub',
       subtitle: 'Compare your conversion metrics against verified top-quartile Shopify merchants.',
-      category: 'Category: Fashion & Apparel',
+      category: 'Category: Sleep, Health & Wellness',
       yourStore: 'Your Store',
       categoryAvg: 'Industry Average',
       percentile: 'Percentile',

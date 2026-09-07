@@ -15,6 +15,7 @@ import {
   Tag,
   Package,
   Layers,
+  RefreshCw,
 } from 'lucide-react';
 
 interface AICoachSectionProps {
@@ -23,6 +24,8 @@ interface AICoachSectionProps {
   onApplyAction: (actionId: string) => void;
   onDismissAction: (actionId: string) => void;
   onOpenContentModal: (productId: string) => void;
+  onReanalyze?: () => void;
+  isReanalyzing?: boolean;
 }
 
 function getSafeText(field: any, lang: Language, fallback = ''): string {
@@ -38,6 +41,8 @@ export default function AICoachSection({
   cards,
   language,
   onApplyAction,
+  onReanalyze,
+  isReanalyzing = false,
 }: AICoachSectionProps) {
   const t = translations[language];
   const [chatOpen, setChatOpen] = useState(false);
@@ -95,21 +100,21 @@ export default function AICoachSection({
 
     setTimeout(() => {
       let reply = '';
-      if (textToSend.includes('dönüşüm') || textToSend.toLowerCase().includes('conversion')) {
+      if (textToSend.includes('dönüşüm') || textToSend.toLowerCase().includes('conversion') || textToSend.includes('satış') || textToSend.includes('order')) {
         reply =
           language === 'tr'
-            ? 'Dönüşüm oranınızı (%3.2) sektör lideri seviyesine (%4.1) çıkarmak için tespit ettiğim en büyük tıkanıklık: "Doğal İpek Fular" sayfasında sosyal kanıt (yorum) eksikliği. Bu ürüne 4+ müşteri fotoğrafı ekleyip ilk alışverişe özel sepette %15 kupon pop-up\'ı tanımlamanız dönüşümü anında %22 artıracaktır.'
-            : 'To lift your conversion rate (3.2%) toward top-tier (4.1%), the highest friction point detected is on the "Silk Scarf" page (lack of social review badges). Adding 3+ verified photo reviews and an exit-intent 15% first-order discount code will produce an immediate 22% lift.';
-      } else if (textToSend.includes('rakip') || textToSend.toLowerCase().includes('competitor')) {
+            ? 'Nightfold DeepRest 3D Uyku Maskesi şu an canlı katalogda 36.714 adet stokla hazır bekliyor ancak henüz 0 sipariş kaydedilmiş. Temel tıkanıklık: Soğuk trafik hunisinde kanca (hook) eksikliği. TikTok ve Instagram Reels için "100% Karartma (Zero Light Leak)" temalı 3 saniyelik kreatif kancalar ve sepette "2. Ürüne %40 İndirim" uyku seti teklifi sunmalıyız.'
+            : 'Nightfold DeepRest 3D Sleep Mask is stocked with 36,714 units ready, but currently records 0 sales. The primary bottleneck is top-of-funnel ad hook resonance. We recommend launching 3-second TikTok hooks highlighting 100% Blackout / Zero Eye Pressure and introducing a "Buy 1, Get 2nd 40% Off" couples bundle.';
+      } else if (textToSend.includes('rakip') || textToSend.toLowerCase().includes('competitor') || textToSend.includes('manta')) {
         reply =
           language === 'tr'
-            ? '"ZaraStyle Collection" şu an "Süet Chelsea Bot" stoklarını tamamen tüketmiş durumda. Benzer modelinizin fiyatını $129\'dan $139\'a yükseltin ve reklam başlığınızı "Aynı Gün Kargoda - Son Stoklar" olarak güncelleyin. Kar marjınız doğrudan %8 genişleyecektir.'
-            : '"ZaraStyle Collection" has completely stocked out on "Suede Chelsea Boots". You can safely elevate your price from $129 to $139 and test an ad angle focusing on "Express Same-Day Dispatch - Limited Batches". This captures an immediate 8% gross margin expansion.';
+            ? 'Pazar lideri Manta Sleep PRO şu anda $39.99 seviyesinde fiyatlandırılmış durumda. Nightfold $34.99 liste fiyatıyla tam $5.00 net fiyat avantajına ve 3D derin göz oyukları (sıfır göz baskısı) ergonomisine sahip. Reklam kopyalarımızda bu $5 arbitrajı ve ergonomiyi vurgulamalıyız.'
+            : 'Key market benchmark Manta Sleep PRO is currently selling at $39.99. Nightfold at $34.99 commands a $5.00 immediate price arbitrage advantage plus zero-pressure 3D contoured eye cups. We should directly feature this value proposition in ad copy A/B tests.';
       } else {
         reply =
           language === 'tr'
-            ? 'Mağazanızın en kritik darboğazı: 94 adet Vintage Keten Gömlek $1,400 sermayeyi kilitliyor. Bu stoğu nakite döndürmek için "İkinci Ürüne %50 İndirim" flaş kampanyası başlatalım mı?'
-            : 'Your primary operational bottleneck is 94 units of Vintage Linen Shirts tying up $1,400 in working capital. Shall we deploy an automated "Buy 1, Get 2nd at 50% Off" flash clearance bundle?';
+            ? 'Nightfold Büyüme Direktörü Özeti: 36.714 adet stok ($1.28M potansiyel envanter değeri) aktif. İlk satış ivmesi için Meta Ads veya TikTok UGC kreatif testini başlatıp $34.99 tekli + $49.99 çiftli uyku seti paketini ana sayfada öne çıkaralım.'
+            : 'Nightfold Growth Director Summary: 36,714 units ($1.28M inventory pipeline) ready. To kickstart initial sales velocity, launch UGC ad creative testing on Meta/TikTok and feature a $49.99 Couples Sleep Bundle on the storefront hero.';
       }
 
       setChatMessages([...newMsgs, { role: 'assistant', text: reply }]);
@@ -151,20 +156,36 @@ export default function AICoachSection({
               <Bot className="w-3 h-3 text-zinc-400" />
               {t.aiCoach.badge}
             </span>
-            <span className="text-[11px] text-zinc-400 font-mono">Claude 3.5 & GPT-4o</span>
+            <span className="text-[11px] text-purple-400 font-mono font-medium">Gemini 1.5 Pro & Flash (Growth Director)</span>
           </div>
           <h2 className="text-base sm:text-lg font-semibold text-zinc-100 tracking-tight">{t.aiCoach.title}</h2>
           <p className="text-xs text-zinc-400 mt-0.5 max-w-2xl">{t.aiCoach.subtitle}</p>
         </div>
 
-        {/* Outline Assistant Button */}
-        <button
-          onClick={() => setChatOpen(true)}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-transparent text-zinc-300 hover:text-white text-xs font-medium transition-colors"
-        >
-          <Bot className="w-3.5 h-3.5 text-zinc-400" />
-          <span>{t.aiCoach.openAssistant}</span>
-        </button>
+        {/* Action Buttons: Re-analyze with Gemini & Open Assistant */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {onReanalyze && (
+            <button
+              onClick={onReanalyze}
+              disabled={isReanalyzing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-medium transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-purple-400 ${isReanalyzing ? 'animate-spin' : ''}`} />
+              <span>
+                {isReanalyzing
+                  ? (language === 'tr' ? 'Analiz Ediliyor...' : 'Analyzing...')
+                  : (language === 'tr' ? 'Yeniden Analiz Et (Gemini)' : 'Re-analyze (Gemini)')}
+              </span>
+            </button>
+          )}
+          <button
+            onClick={() => setChatOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-transparent text-zinc-300 hover:text-white text-xs font-medium transition-colors"
+          >
+            <Bot className="w-3.5 h-3.5 text-zinc-400" />
+            <span>{t.aiCoach.openAssistant}</span>
+          </button>
+        </div>
       </div>
 
       {/* 3 Priority Action Cards with Visual Hierarchy */}

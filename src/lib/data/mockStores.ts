@@ -419,7 +419,7 @@ export const MOCK_AD_CAMPAIGNS: AdCampaign[] = [
 
 export const MOCK_BENCHMARKS: CategoryBenchmark[] = [
   {
-    category: 'Fashion & Apparel',
+    category: 'Sleep, Health & Wellness',
     metric: 'Ortalama Sepet Tutarı (AOV)',
     storeValue: 74.8,
     benchmarkValue: 58.4,
@@ -427,7 +427,7 @@ export const MOCK_BENCHMARKS: CategoryBenchmark[] = [
     isHigherBetter: true,
   },
   {
-    category: 'Fashion & Apparel',
+    category: 'Sleep, Health & Wellness',
     metric: 'Mağaza Dönüşüm Oranı (CR %)',
     storeValue: 3.2,
     benchmarkValue: 2.1,
@@ -435,7 +435,7 @@ export const MOCK_BENCHMARKS: CategoryBenchmark[] = [
     isHigherBetter: true,
   },
   {
-    category: 'Fashion & Apparel',
+    category: 'Sleep, Health & Wellness',
     metric: 'Blended Pazarlama ROAS',
     storeValue: 3.65,
     benchmarkValue: 2.75,
@@ -443,7 +443,7 @@ export const MOCK_BENCHMARKS: CategoryBenchmark[] = [
     isHigherBetter: true,
   },
   {
-    category: 'Fashion & Apparel',
+    category: 'Sleep, Health & Wellness',
     metric: 'Müşteri Edinme Maliyeti (CAC $)',
     storeValue: 19.4,
     benchmarkValue: 24.2,

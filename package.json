@@ -12,6 +12,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/genai": "^2.21.0",
     "@prisma/client": "^6.4.1",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",

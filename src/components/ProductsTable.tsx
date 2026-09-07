@@ -174,7 +174,11 @@ export default function ProductsTable({
                     <span className="text-zinc-400">{language === 'tr' ? 'adet' : 'units'}</span>
                   </div>
                   <div className="text-[10px] flex items-center gap-1 mt-0.5">
-                    {product.daysOfInventory <= 5 ? (
+                    {!product.velocity30Days || product.velocity30Days === 0 ? (
+                      <span className="text-zinc-500 italic text-[10px]">
+                        {language === 'tr' ? 'Satış verisi bekleniyor' : 'Awaiting sales velocity'}
+                      </span>
+                    ) : product.daysOfInventory <= 5 ? (
                       <span className="text-rose-400 font-medium flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
                         {product.daysOfInventory} {t.productsTable.daysLeft}
@@ -187,14 +191,22 @@ export default function ProductsTable({
                   </div>
                 </td>
 
-                {/* Velocity */}
+                {/* Velocity & CR */}
                 <td className="py-3.5 px-4 font-mono">
-                  <div className="text-zinc-200">
-                    {product.velocity30Days} <span className="text-zinc-400 text-[10px]">/gün</span>
-                  </div>
-                  <div className="text-[10px] text-zinc-400 mt-0.5">
-                    %{product.conversionRate} CR
-                  </div>
+                  {(!product.velocity30Days || product.velocity30Days === 0) && (!product.conversionRate || product.conversionRate === 0) ? (
+                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded bg-zinc-900 border border-white/[0.06] text-[10px] text-zinc-400 font-sans italic">
+                      {language === 'tr' ? 'Veri Bekleniyor (Henüz Sipariş Yok)' : 'Awaiting Data (No Orders Yet)'}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-zinc-200">
+                        {product.velocity30Days || 0} <span className="text-zinc-400 text-[10px]">{language === 'tr' ? '/gün' : '/day'}</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-400 mt-0.5">
+                        %{product.conversionRate || 0} CR
+                      </div>
+                    </>
+                  )}
                 </td>
 
                 {/* Actions */}
