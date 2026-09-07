@@ -395,7 +395,12 @@ Provide exactly 5 viralHooks, 3 adCopies, and 3 bioOptions with 4 storyHighlight
 
       const responseText = response.text;
       if (responseText) {
-        const parsed = JSON.parse(responseText);
+        // Gemini may wrap JSON in markdown code fences even with responseMimeType set
+        let cleanedText = responseText.trim();
+        cleanedText = cleanedText.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?\s*```$/i, '');
+        cleanedText = cleanedText.trim();
+
+        const parsed = JSON.parse(cleanedText);
         if (parsed.viralHooks && parsed.adCopies && parsed.instagramBio) {
           return {
             isLiveAi: true,

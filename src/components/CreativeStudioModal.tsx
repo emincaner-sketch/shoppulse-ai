@@ -18,6 +18,8 @@ import {
   Share2,
   ExternalLink,
   Flame,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -31,6 +33,18 @@ interface CreativeStudioModalProps {
 
 type StudioTab = 'HOOKS' | 'META_ADS' | 'INSTAGRAM_BIO';
 
+/**
+ * Safely parse a JSON string that may be wrapped in markdown code fences.
+ * Gemini sometimes returns ```json ... ``` wrapping around the actual JSON.
+ */
+function safeParseJSON(raw: string): any {
+  // Strip markdown code fences: ```json ... ``` or ``` ... ```
+  let cleaned = raw.trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?\s*```$/i, '');
+  cleaned = cleaned.trim();
+  return JSON.parse(cleaned);
+}
+
 export default function CreativeStudioModal({
   isOpen,
   onClose,
@@ -42,6 +56,7 @@ export default function CreativeStudioModal({
   const [activeTab, setActiveTab] = useState<StudioTab>('HOOKS');
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [studioData, setStudioData] = useState<any>(null);
 
@@ -51,14 +66,36 @@ export default function CreativeStudioModal({
 
     async function fetchCreatives() {
       setLoading(true);
+      setErrorMsg(null);
       try {
         const res = await fetch(`/api/ai/creative-studio?lang=${language}`);
         if (res.ok) {
-          const data = await res.json();
-          setStudioData(data);
+          const text = await res.text();
+          try {
+            const data = safeParseJSON(text);
+            setStudioData(data);
+          } catch (parseErr) {
+            console.warn('Creative studio JSON parse failed:', parseErr);
+            setErrorMsg(
+              language === 'tr'
+                ? 'AI yanıtı ayrıştırılamadı. Lütfen "Yeniden Üret" butonuyla tekrar deneyin.'
+                : 'Failed to parse AI response. Please click "Regenerate" to try again.'
+            );
+          }
+        } else {
+          setErrorMsg(
+            language === 'tr'
+              ? 'AI içerik üretimi başarısız oldu. Lütfen tekrar deneyin.'
+              : 'AI content generation failed. Please try again.'
+          );
         }
       } catch (e) {
         console.warn('Creative studio fetch failed:', e);
+        setErrorMsg(
+          language === 'tr'
+            ? 'Bağlantı hatası oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin.'
+            : 'Connection error occurred. Please check your internet and try again.'
+        );
       } finally {
         setLoading(false);
       }
@@ -69,26 +106,51 @@ export default function CreativeStudioModal({
 
   const handleRegenerate = async () => {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const res = await fetch('/api/ai/creative-studio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ language }),
       });
+
       if (res.ok) {
-        const data = await res.json();
-        setStudioData(data);
+        const text = await res.text();
         try {
-          confetti({
-            particleCount: 40,
-            spread: 50,
-            origin: { y: 0.6 },
-            colors: ['#38bdf8', '#10b981', '#ffffff'],
-          });
-        } catch {}
+          const data = safeParseJSON(text);
+          setStudioData(data);
+          try {
+            confetti({
+              particleCount: 40,
+              spread: 50,
+              origin: { y: 0.6 },
+              colors: ['#38bdf8', '#10b981', '#ffffff'],
+            });
+          } catch {}
+        } catch (parseErr) {
+          console.warn('Regenerate JSON parse failed:', parseErr);
+          setErrorMsg(
+            language === 'tr'
+              ? 'AI yanıtı ayrıştırılamadı. Gemini geçici olarak hata vermiş olabilir, lütfen tekrar deneyin.'
+              : 'Failed to parse AI response. Gemini may have returned a temporary error, please try again.'
+          );
+        }
+      } else {
+        const errBody = await res.json().catch(() => ({}));
+        setErrorMsg(
+          errBody.error ||
+            (language === 'tr'
+              ? 'İçerik yeniden üretimi başarısız oldu. Lütfen tekrar deneyin.'
+              : 'Content regeneration failed. Please try again.')
+        );
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Regenerate failed:', e);
+      setErrorMsg(
+        language === 'tr'
+          ? 'Bağlantı hatası oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin.'
+          : 'Connection error occurred. Please check your internet and try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -132,9 +194,13 @@ export default function CreativeStudioModal({
             <button
               onClick={handleRegenerate}
               disabled={loading}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.1] hover:border-white/20 bg-zinc-850 hover:bg-zinc-800 text-zinc-200 text-xs font-medium transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.1] hover:border-white/20 bg-zinc-850 hover:bg-zinc-800 text-zinc-200 text-xs font-medium transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
               <span>{language === 'tr' ? 'Yeniden Üret' : 'Regenerate'}</span>
             </button>
             <button
@@ -193,8 +259,42 @@ export default function CreativeStudioModal({
 
         {/* Content Body */}
         <div className="p-6 overflow-y-auto space-y-6">
+          {/* Error Toast */}
+          {errorMsg && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 animate-in slide-in-from-top-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <p className="text-xs text-rose-300 flex-1">{errorMsg}</p>
+              <button
+                onClick={() => setErrorMsg(null)}
+                className="text-rose-400 hover:text-rose-300 shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Loading Overlay for Content Area */}
+          {loading && (
+            <div className="py-16 flex flex-col items-center justify-center gap-4 animate-in fade-in">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full border-2 border-emerald-500/20 border-t-emerald-400 animate-spin" />
+                <Sparkles className="w-5 h-5 text-emerald-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-sm font-medium text-zinc-200">
+                  {language === 'tr' ? 'Gemini AI İçerik Üretiyor...' : 'Gemini AI Generating Content...'}
+                </p>
+                <p className="text-[11px] text-zinc-500 font-mono">
+                  {language === 'tr'
+                    ? 'Viral kancalar, reklam metinleri ve profil şablonları oluşturuluyor'
+                    : 'Creating viral hooks, ad copies and profile templates'}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* TAB 1: TikTok & Reels Viral Hooks */}
-          {activeTab === 'HOOKS' && (
+          {!loading && activeTab === 'HOOKS' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <p>
@@ -288,7 +388,7 @@ export default function CreativeStudioModal({
           )}
 
           {/* TAB 2: Meta Ads Copy Variants */}
-          {activeTab === 'META_ADS' && (
+          {!loading && activeTab === 'META_ADS' && (
             <div className="space-y-4">
               <div className="text-xs text-zinc-400">
                 {language === 'tr'
@@ -374,7 +474,7 @@ export default function CreativeStudioModal({
           )}
 
           {/* TAB 3: Instagram Bio & Highlights */}
-          {activeTab === 'INSTAGRAM_BIO' && (
+          {!loading && activeTab === 'INSTAGRAM_BIO' && (
             <div className="space-y-6">
               <div>
                 <h3 className="text-xs font-semibold text-zinc-200 mb-1">

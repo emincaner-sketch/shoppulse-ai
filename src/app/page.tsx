@@ -155,11 +155,24 @@ export default function Home() {
     loadLiveStore();
   }, []);
 
-  // Check Meta Ads connection status on mount
+  // Check Meta Ads connection status on mount (env vars OR localStorage)
   useEffect(() => {
     async function checkMeta() {
       try {
-        const res = await fetch('/api/meta/campaigns');
+        // First try the default endpoint (uses env vars)
+        let url = '/api/meta/campaigns';
+
+        // If localStorage has saved credentials, pass them as query params as a fallback
+        try {
+          const savedToken = localStorage.getItem('meta_access_token');
+          const savedAccountId = localStorage.getItem('meta_ad_account_id');
+          const savedConnected = localStorage.getItem('meta_connected');
+          if (savedConnected === 'true' && savedToken && savedAccountId) {
+            url = `/api/meta/campaigns?token=${encodeURIComponent(savedToken)}&adAccountId=${encodeURIComponent(savedAccountId)}`;
+          }
+        } catch {}
+
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           if (data.isConnected) {

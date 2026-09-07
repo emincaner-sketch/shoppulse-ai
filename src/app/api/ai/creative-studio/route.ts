@@ -50,16 +50,27 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const language = (searchParams.get('lang') || 'tr') as 'tr' | 'en';
-  const result = await runCreativeStudioGeneration(DEFAULT_NIGHTFOLD_CONTEXT.mainProduct, language);
-  return NextResponse.json({
-    success: true,
-    ...result,
-    product: {
-      title: DEFAULT_NIGHTFOLD_CONTEXT.mainProduct.title,
-      price: DEFAULT_NIGHTFOLD_CONTEXT.mainProduct.price,
-    },
-    timestamp: new Date().toISOString(),
-  });
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const language = (searchParams.get('lang') || 'tr') as 'tr' | 'en';
+    const result = await runCreativeStudioGeneration(DEFAULT_NIGHTFOLD_CONTEXT.mainProduct, language);
+    return NextResponse.json({
+      success: true,
+      ...result,
+      product: {
+        title: DEFAULT_NIGHTFOLD_CONTEXT.mainProduct.title,
+        price: DEFAULT_NIGHTFOLD_CONTEXT.mainProduct.price,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('[Creative Studio GET Error]:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Creative studio generation failed',
+      },
+      { status: 500 }
+    );
+  }
 }

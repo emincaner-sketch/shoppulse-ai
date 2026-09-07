@@ -19,7 +19,7 @@ interface ConnectMetaModalProps {
   isOpen: boolean;
   onClose: () => void;
   language: Language;
-  onConnected: (accountData: { adAccountId: string }) => void;
+  onConnected: (campaigns: any[]) => void;
 }
 
 export default function ConnectMetaModal({
@@ -51,16 +51,32 @@ export default function ConnectMetaModal({
     setErrorMsg(null);
 
     try {
+      // Normalize the account ID: add act_ prefix if missing
+      const normalizedAccountId = adAccountId.trim().startsWith('act_')
+        ? adAccountId.trim()
+        : `act_${adAccountId.trim()}`;
+
       const res = await fetch('/api/meta/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accessToken: accessToken.trim(),
-          adAccountId: adAccountId.trim(),
+          adAccountId: normalizedAccountId,
         }),
       });
 
-      if (res.ok) {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // Persist credentials to localStorage for subsequent API calls
+        try {
+          localStorage.setItem('meta_ad_account_id', normalizedAccountId);
+          localStorage.setItem('meta_access_token', accessToken.trim());
+          localStorage.setItem('meta_connected', 'true');
+        } catch (storageErr) {
+          console.warn('localStorage save failed:', storageErr);
+        }
+
         setIsSuccess(true);
         try {
           confetti({
@@ -70,16 +86,28 @@ export default function ConnectMetaModal({
             colors: ['#1877f2', '#10b981', '#ffffff'],
           });
         } catch {}
+
+        // Pass campaigns back to parent, allowing the Sentinel to update immediately
+        const campaigns = data.campaigns || [];
         setTimeout(() => {
-          onConnected({ adAccountId: adAccountId.trim() });
+          onConnected(campaigns);
           onClose();
         }, 1200);
       } else {
-        const data = await res.json();
-        setErrorMsg(data.error || 'Meta Ads bağlantısı kurulamadı.');
+        setErrorMsg(
+          data.error ||
+            (language === 'tr'
+              ? 'Meta Ads bağlantısı kurulamadı. Token veya Hesap ID bilgilerinizi kontrol edin.'
+              : 'Meta Ads connection failed. Please check your token and account ID.')
+        );
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Bağlantı hatası oluştu.');
+      setErrorMsg(
+        err.message ||
+          (language === 'tr'
+            ? 'Bağlantı hatası oluştu. Lütfen internet bağlantınızı kontrol edin.'
+            : 'Connection error occurred. Please check your internet connection.')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -97,8 +125,30 @@ export default function ConnectMetaModal({
           colors: ['#1877f2', '#10b981', '#ffffff'],
         });
       } catch {}
+
+      // Save demo mode indicator to localStorage
+      try {
+        localStorage.setItem('meta_ad_account_id', 'act_78490402974');
+        localStorage.setItem('meta_connected', 'true');
+      } catch {}
+
       setTimeout(() => {
-        onConnected({ adAccountId: 'act_78490402974' });
+        onConnected([
+          {
+            id: 'meta-camp-demo-1',
+            platform: 'META',
+            name: 'Advantage+ Shopping | Nightfold 3D Sleep Mask',
+            status: 'ACTIVE',
+            dailyBudget: 45.0,
+            spendToday: 0,
+            roasToday: 0,
+            ctr: 0,
+            cpc: 0,
+            linkedProductName: 'Nightfold DeepRest 3D Sleep Mask',
+            linkedProductStock: 36714,
+            hasWarning: false,
+          },
+        ]);
         onClose();
       }, 1000);
     }, 600);
@@ -168,8 +218,8 @@ export default function ConnectMetaModal({
               />
               <p className="text-[10px] text-zinc-500 mt-1">
                 {language === 'tr'
-                  ? 'Meta Ads Manager URL adresindeki "act=..." parametresi.'
-                  : 'Found in your Ads Manager URL as "act=...".'}
+                  ? 'Meta Ads Manager URL adresindeki "act=..." parametresi. "act_" ön eki opsiyoneldir, otomatik eklenir.'
+                  : 'Found in your Ads Manager URL as "act=...". The "act_" prefix is optional and will be auto-added.'}
               </p>
             </div>
 
