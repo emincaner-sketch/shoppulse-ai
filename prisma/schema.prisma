@@ -1,0 +1,410 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+  AGENCY_MANAGER
+}
+
+enum PlanTier {
+  FREE_STARTER
+  GROWTH_PRO
+  SCALE_ENTERPRISE
+}
+
+enum ProductStatus {
+  STAR
+  QUESTION_MARK
+  CASH_COW
+  ZOMBIE_DOG
+}
+
+enum ActionPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ActionStatus {
+  PENDING
+  ACCEPTED
+  DISMISSED
+  APPLIED
+}
+
+enum PlatformType {
+  META_ADS
+  GOOGLE_ADS
+  TIKTOK_ADS
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  image         String?
+  role          Role      @default(USER)
+  planTier      PlanTier  @default(FREE_STARTER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  stores        StoreMember[]
+  posts         CommunityPost[]
+  comments      CommunityComment[]
+  auditLogs     AuditLog[]
+  subscriptions Subscription[]
+
+  @@index([email])
+}
+
+model Store {
+  id              String      @id @default(cuid())
+  shopifyDomain   String      @unique
+  storeName       String
+  currency        String      @default("USD")
+  timezone        String      @default("UTC")
+  accessToken     String
+  installedAt     DateTime    @default(now())
+  uninstalledAt   DateTime?
+  isActive        Boolean     @default(true)
+  healthScore     Float       @default(0.0)
+  lastSyncAt      DateTime?
+  syncStatus      String      @default("READY")
+  syncProgress    Int         @default(100)
+  syncStage       String?
+
+  members         StoreMember[]
+  products        Product[]
+  orders          Order[]
+  dailySnapshots  StoreDailySnapshot[]
+  competitors     CompetitorStore[]
+  adAccounts      AdAccount[]
+  actionCards     ActionCard[]
+  benchmarks      StoreBenchmark[]
+  subscriptions   Subscription[]
+
+  @@index([shopifyDomain])
+}
+
+model StoreMember {
+  id        String   @id @default(cuid())
+  userId    String
+  storeId   String
+  role      String   @default("OWNER")
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storeId])
+}
+
+model Product {
+  id               String         @id @default(cuid())
+  storeId          String
+  shopifyProductId String
+  title            String
+  handle           String
+  vendor           String?
+  productType      String?
+  tags             String[]
+  status           ProductStatus  @default(QUESTION_MARK)
+  score            Float          @default(50.0)
+
+  costPrice        Float?         @default(0.0)
+  retailPrice      Float          @default(0.0)
+  totalInventory   Int            @default(0)
+  daysOfInventory  Int            @default(999)
+  velocity30Days   Float          @default(0.0)
+  grossMarginPct   Float          @default(0.0)
+
+  aiOptimizedTitle String?
+  aiOptimizedDesc  String?
+  lastAnalyzedAt   DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  store            Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variants         ProductVariant[]
+  orderItems       OrderItem[]
+  competitorMaps   CompetitorProductMatch[]
+
+  @@unique([storeId, shopifyProductId])
+  @@index([storeId, status])
+}
+
+model ProductVariant {
+  id                String   @id @default(cuid())
+  productId         String
+  shopifyVariantId  String
+  sku               String?
+  title             String
+  price             Float
+  compareAtPrice    Float?
+  inventoryQuantity Int      @default(0)
+
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([shopifyVariantId])
+  @@index([productId])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  storeId        String
+  shopifyOrderId String
+  orderNumber    String
+  totalPrice     Float
+  subtotalPrice  Float
+  totalDiscounts Float       @default(0.0)
+  totalTax       Float       @default(0.0)
+  processedAt    DateTime
+  financialStatus String
+  customerEmail  String?
+  createdAt      DateTime    @default(now())
+
+  store          Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items          OrderItem[]
+
+  @@unique([storeId, shopifyOrderId])
+  @@index([storeId, processedAt])
+}
+
+model OrderItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  productId        String?
+  shopifyVariantId String?
+  quantity         Int
+  price            Float
+  totalDiscount    Float    @default(0.0)
+
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model StoreDailySnapshot {
+  id              String   @id @default(cuid())
+  storeId         String
+  date            DateTime @db.Date
+  totalSales      Float    @default(0.0)
+  totalOrders     Int      @default(0)
+  averageOrderVal Float    @default(0.0)
+  totalAdSpend    Float    @default(0.0)
+  blendedRoas     Float    @default(0.0)
+  netProfitEst    Float    @default(0.0)
+  healthScore     Float    @default(0.0)
+
+  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, date])
+  @@index([storeId, date])
+}
+
+model CompetitorStore {
+  id               String   @id @default(cuid())
+  storeId          String
+  domain           String
+  name             String?
+  estimatedTraffic Int?     @default(0)
+  estimatedRevenue Float?   @default(0.0)
+  activeMetaAdsCount Int    @default(0)
+  currency         String   @default("USD")
+  lastScrapedAt    DateTime?
+  createdAt        DateTime @default(now())
+
+  store            Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products         CompetitorProduct[]
+
+  @@unique([storeId, domain])
+  @@index([storeId])
+}
+
+model CompetitorProduct {
+  id                 String   @id @default(cuid())
+  competitorStoreId  String
+  title              String
+  handle             String
+  price              Float
+  isBestSeller       Boolean  @default(false)
+  isInStock          Boolean  @default(true)
+  imageUrl           String?
+  lastPriceChange    DateTime?
+  firstSeenAt        DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  competitorStore    CompetitorStore @relation(fields: [competitorStoreId], references: [id], onDelete: Cascade)
+  matches            CompetitorProductMatch[]
+
+  @@index([competitorStoreId, isBestSeller])
+}
+
+model CompetitorProductMatch {
+  id                  String   @id @default(cuid())
+  myProductId         String
+  competitorProductId String
+  similarityScore     Float    @default(0.0)
+  priceDifference     Float
+
+  myProduct           Product           @relation(fields: [myProductId], references: [id], onDelete: Cascade)
+  competitorProduct   CompetitorProduct @relation(fields: [competitorProductId], references: [id], onDelete: Cascade)
+
+  @@unique([myProductId, competitorProductId])
+}
+
+model AdAccount {
+  id            String       @id @default(cuid())
+  storeId       String
+  platform      PlatformType
+  accountId     String
+  accountName   String
+  accessToken   String
+  isActive      Boolean      @default(true)
+
+  store         Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  campaigns     AdCampaign[]
+
+  @@unique([storeId, platform, accountId])
+}
+
+model AdCampaign {
+  id            String    @id @default(cuid())
+  adAccountId   String
+  campaignId    String
+  name          String
+  status        String
+  dailyBudget   Float?
+  spendToday    Float     @default(0.0)
+  roasToday     Float     @default(0.0)
+  cpc           Float     @default(0.0)
+  ctr           Float     @default(0.0)
+  lastUpdated   DateTime  @updatedAt
+
+  adAccount     AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([adAccountId, campaignId])
+  @@index([status])
+}
+
+model ActionCard {
+  id             String         @id @default(cuid())
+  storeId        String
+  title          String
+  description    String         @db.Text
+  rationale      String         @db.Text
+  category       String
+  priority       ActionPriority @default(MEDIUM)
+  status         ActionStatus   @default(PENDING)
+  impactEstimate String?
+  payloadJson    Json?
+  expiresAt      DateTime?
+  createdAt      DateTime       @default(now())
+
+  store          Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, status])
+  @@index([priority])
+}
+
+model StoreBenchmark {
+  id               String   @id @default(cuid())
+  storeId          String
+  category         String
+  percentileRank   Float
+  categoryAvgAov   Float
+  categoryAvgConv  Float
+  recordedMonth    String
+
+  store            Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, recordedMonth])
+}
+
+model CommunityPost {
+  id        String   @id @default(cuid())
+  authorId  String
+  title     String
+  content   String   @db.Text
+  category  String
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  CommunityComment[]
+
+  @@index([category])
+}
+
+model CommunityComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Subscription {
+  id                  String    @id @default(cuid())
+  userId              String
+  storeId             String?
+  provider            String    // "SHOPIFY_BILLING" | "STRIPE"
+  externalId          String    // Stripe subscription id or Shopify appSubscriptionId
+  planTier            PlanTier  @default(GROWTH_PRO)
+  status              String    // "ACTIVE", "CANCELLED", "PAST_DUE", "TRIALING"
+  currentPeriodStart  DateTime  @default(now())
+  currentPeriodEnd    DateTime?
+  cancelAtPeriodEnd   Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store               Store?    @relation(fields: [storeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([storeId])
+  @@index([externalId])
+}
+
+model WebhookEvent {
+  id          String   @id // x-shopify-webhook-id or stripe event id
+  source      String   // "SHOPIFY", "STRIPE"
+  topic       String
+  shopDomain  String?
+  status      String   @default("PROCESSED") // PROCESSED, DUPLICATE_IGNORED, FAILED
+  payload     Json?
+  processedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([source, id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
