@@ -45,6 +45,17 @@ ShopPulse AI'ın ciro, stok, ürün analitiği ve AI optimizasyonlarını eksiks
 
 ---
 
+### 🛠️ Otomatik Token Edinme Aracı (`scripts/get-token.mjs`):
+Shopify Partner / Dev Dashboard üzerinden aldığınız **Client ID** ve **Client Secret** (`shpss_...`) ile doğrudan kalıcı bir `shpat_` token'ı üretip `.env.local` dosyanıza otomatik kaydetmek için şu komutu çalıştırabilirsiniz:
+```bash
+node scripts/get-token.mjs <magaza-adiniz.myshopify.com> <CLIENT_ID> <CLIENT_SECRET>
+```
+Bu araç:
+- Önce Shopify'ın **Client Credentials Grant** protokolünü test ederek token'ı saniyeler içinde doğrudan çeker.
+- Gerekirse yerel 1-tıkla OAuth sunucusu açarak kalıcı token'ı otomatik olarak `.env.local` dosyanıza yazar.
+
+---
+
 ## ⚡ Bölüm 2: Vercel veya Render'a Canlı Dağıtım (Deployment)
 
 ### Seçenek A: Vercel ile Dağıtım (En Kolay & En Hızlı — Önerilen)
