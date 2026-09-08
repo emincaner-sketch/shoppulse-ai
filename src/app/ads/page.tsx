@@ -144,60 +144,65 @@ export default function MetaAdsManagerPage() {
   }, []);
 
   // Handle Meta Campaign Toggle (ACTIVE / PAUSED)
-  const handleToggleStatus = async (camp: AdCampaign) => {
-    const nextStatus = camp.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-    setTogglingId(camp.id);
-
-    // Optimistic UI Update
-    setCampaigns((prev) =>
-      prev.map((c) => (c.id === camp.id ? { ...c, status: nextStatus } : c))
-    );
+  const handleToggleStatus = async (campaignId: string, currentStatus: string) => {
+    const newStatus: 'ACTIVE' | 'PAUSED' = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    setTogglingId(campaignId);
 
     try {
-      const accessToken = typeof window !== 'undefined' ? localStorage.getItem('meta_access_token') : null;
+      const accessToken =
+        typeof window !== 'undefined' ? localStorage.getItem('meta_access_token') : null;
+
       const res = await fetch('/api/meta/campaigns/update-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          campaignId: camp.id,
-          adsetId: camp.adsetId,
-          status: nextStatus,
+          campaignId,
+          status: newStatus,
           accessToken,
         }),
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
+        // Update local state
+        setCampaigns((prev) =>
+          prev.map((c) => (c.id === campaignId ? { ...c, status: newStatus } : c))
+        );
+
         setToast({
           title:
-            nextStatus === 'ACTIVE'
-              ? (language === 'tr' ? 'Kampanya Aktifleştirildi' : 'Campaign Activated')
-              : (language === 'tr' ? 'Kampanya Duraklatıldı' : 'Campaign Paused'),
+            newStatus === 'ACTIVE'
+              ? (language === 'tr' ? 'Kampanya Başlatıldı' : 'Campaign Activated')
+              : (language === 'tr' ? 'Kampanya Durduruldu' : 'Campaign Paused'),
           message:
             language === 'tr'
-              ? `"${camp.name}" durumu "${nextStatus === 'ACTIVE' ? 'AKTİF' : 'DURAKLATILDI'}" olarak güncellendi.`
-              : `"${camp.name}" status updated to ${nextStatus}.`,
+              ? (newStatus === 'ACTIVE'
+                  ? 'Kampanya başarıyla aktif duruma getirildi ve reklam yayını başlatıldı.'
+                  : 'Kampanya başarıyla durduruldu ve bütçe harcaması durduruldu.')
+              : (newStatus === 'ACTIVE'
+                  ? 'Campaign is now active and delivering.'
+                  : 'Campaign paused and delivery stopped.'),
           type: 'success',
         });
       } else {
-        // Revert optimistic update
-        setCampaigns((prev) =>
-          prev.map((c) => (c.id === camp.id ? { ...c, status: camp.status } : c))
-        );
         setToast({
-          title: language === 'tr' ? 'Durum Güncellenemedi' : 'Status Update Failed',
-          message: data.error || (language === 'tr' ? 'Meta API isteği reddetti.' : 'Meta API error.'),
+          title: language === 'tr' ? 'Durum Güncellenemedi' : 'Update Failed',
+          message:
+            data.error ||
+            (language === 'tr'
+              ? 'Meta API durum güncelleme isteğini reddetti.'
+              : 'Meta API rejected status update request.'),
           type: 'error',
         });
       }
     } catch (err: any) {
-      // Revert optimistic update
-      setCampaigns((prev) =>
-        prev.map((c) => (c.id === camp.id ? { ...c, status: camp.status } : c))
-      );
       setToast({
         title: language === 'tr' ? 'Bağlantı Hatası' : 'Connection Error',
-        message: err.message || (language === 'tr' ? 'Sunucuya ulaşılamadı.' : 'Network error.'),
+        message:
+          err.message ||
+          (language === 'tr'
+            ? 'Meta API sunucusuna ulaşılamadı. Lütfen internet bağlantınızı kontrol edin.'
+            : 'Could not reach Meta API server.'),
         type: 'error',
       });
     } finally {
@@ -756,23 +761,27 @@ export default function MetaAdsManagerPage() {
                           !isActive ? 'opacity-70 bg-zinc-950/20' : ''
                         }`}
                       >
-                        {/* Status Toggle Switch */}
-                        <td className="py-3.5 px-4">
+                        {/* Status Toggle Switch Button */}
+                        <td className="py-3.5 px-4 relative z-10">
                           <button
-                            onClick={() => handleToggleStatus(camp)}
+                            type="button"
+                            onClick={() => handleToggleStatus(camp.id, camp.status)}
                             disabled={isToggling}
-                            className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                              isActive ? 'bg-emerald-500' : 'bg-zinc-700'
+                            className={`group relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-zinc-950 hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${
+                              isActive
+                                ? 'bg-emerald-500 hover:bg-emerald-400 shadow-sm shadow-emerald-500/30'
+                                : 'bg-zinc-700 hover:bg-zinc-600'
                             }`}
-                            title={isActive ? 'Kampanyayı Duraklat' : 'Kampanyayı Başlat'}
+                            title={isActive ? 'Kampanyayı Durdur' : 'Kampanyayı Başlat'}
+                            aria-label={isActive ? 'Kampanyayı Durdur' : 'Kampanyayı Başlat'}
                           >
                             <span
-                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out flex items-center justify-center ${
+                              className={`pointer-events-none inline-flex h-5 w-5 transform items-center justify-center rounded-full bg-white shadow-md ring-0 transition-transform duration-200 ease-in-out ${
                                 isActive ? 'translate-x-5' : 'translate-x-0'
                               }`}
                             >
                               {isToggling ? (
-                                <Loader2 className="w-3 h-3 text-zinc-800 animate-spin" />
+                                <Loader2 className="w-3 h-3 text-zinc-900 animate-spin" />
                               ) : isActive ? (
                                 <Play className="w-2.5 h-2.5 text-emerald-600 fill-emerald-600 ml-0.5" />
                               ) : (
@@ -780,9 +789,23 @@ export default function MetaAdsManagerPage() {
                               )}
                             </span>
                           </button>
-                          <span className="block text-[10px] font-mono mt-1 font-semibold text-zinc-400">
-                            {isActive ? 'AKTİF' : 'DURAKLATILDI'}
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className={`inline-block w-1.5 h-1.5 rounded-full ${
+                                isActive ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(camp.id, camp.status)}
+                              disabled={isToggling}
+                              className={`text-[10px] font-mono font-semibold cursor-pointer hover:underline ${
+                                isActive ? 'text-emerald-400 hover:text-emerald-300' : 'text-zinc-400 hover:text-zinc-300'
+                              }`}
+                            >
+                              {isActive ? 'AKTİF' : 'DURDURULDU'}
+                            </button>
+                          </div>
                         </td>
 
                         {/* Campaign Name & Strategy Badge */}
