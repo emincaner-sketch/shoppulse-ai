@@ -12,17 +12,6 @@ export async function POST(request: NextRequest) {
       accessToken: clientToken,
     } = body;
 
-    const token = clientToken || process.env.META_ACCESS_TOKEN;
-    if (!token || token === 'EAAxxxxxxx_your_meta_system_user_access_token_here') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Geçerli bir Meta Access Token bulunamadı. Lütfen Meta Ads bağlantınızı kontrol edin.',
-        },
-        { status: 401 }
-      );
-    }
-
     if (!campaignId && !explicitAdsetId) {
       return NextResponse.json(
         { success: false, error: 'campaignId veya adsetId zorunludur.' },
@@ -46,9 +35,25 @@ export async function POST(request: NextRequest) {
 
     if (isNaN(targetBudget) || targetBudget <= 0) {
       return NextResponse.json(
-        { success: false, error: 'Geçersiz bütçe tutarı. Bütçe 0\'dan büyük olmalıdır.' },
+        { success: false, error: "Geçersiz bütçe tutarı. Bütçe 0'dan büyük olmalıdır." },
         { status: 400 }
       );
+    }
+
+    const token = clientToken || process.env.META_ACCESS_TOKEN;
+    const isPlaceholder = !token || token === 'EAAxxxxxxx_your_meta_system_user_access_token_here';
+
+    // If no live token, return instant simulated update
+    if (isPlaceholder) {
+      return NextResponse.json({
+        success: true,
+        isDemo: true,
+        level: explicitAdsetId ? 'ADSET' : 'CAMPAIGN',
+        campaignId,
+        adsetId: explicitAdsetId,
+        updatedBudget: targetBudget,
+        message: `[Simülasyon Modu] Günlük bütçe $${targetBudget.toFixed(2)}/gün olarak güncellendi. (Canlı Meta API için hesap bağlayınız).`,
+      });
     }
 
     const dailyBudgetCents = Math.round(targetBudget * 100);

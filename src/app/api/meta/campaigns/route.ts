@@ -8,6 +8,88 @@ interface MetaInsight {
   action_values?: Array<{ action_type: string; value: string }>;
 }
 
+const DEFAULT_NIGHTFOLD_CAMPAIGNS = [
+  {
+    id: 'meta-camp-101',
+    adsetId: 'meta-adset-201',
+    platform: 'META',
+    name: 'Advantage+ Shopping (ASC) | DeepRest 3D Blackout Scale 2026',
+    status: 'ACTIVE',
+    dailyBudget: 120.0,
+    spendToday: 85.4,
+    roasToday: 4.12,
+    ctr: 2.84,
+    cpc: 0.48,
+    linkedProductName: 'Nightfold DeepRest 3D Konturlu Uyku Maskesi',
+    linkedProductStock: 36714,
+    hasWarning: false,
+  },
+  {
+    id: 'meta-camp-102',
+    adsetId: 'meta-adset-202',
+    platform: 'META',
+    name: 'ABO Creative Sandbox | #1 Kanca: Karanlık Odada Telefon Flaşı Testi',
+    status: 'ACTIVE',
+    dailyBudget: 45.0,
+    spendToday: 32.1,
+    roasToday: 3.85,
+    ctr: 3.25,
+    cpc: 0.42,
+    linkedProductName: 'Nightfold DeepRest 3D Konturlu Uyku Maskesi',
+    linkedProductStock: 36714,
+    hasWarning: false,
+  },
+  {
+    id: 'meta-camp-103',
+    adsetId: 'meta-adset-203',
+    platform: 'META',
+    name: 'Duo Bundle Arbitrage | $59 Teklif vs Manta Sleep PRO ($39.99)',
+    status: 'ACTIVE',
+    dailyBudget: 60.0,
+    spendToday: 44.5,
+    roasToday: 5.2,
+    ctr: 3.68,
+    cpc: 0.39,
+    linkedProductName: 'Nightfold Duo Bundle ($59.00)',
+    linkedProductStock: 36714,
+    hasWarning: false,
+  },
+  {
+    id: 'meta-camp-104',
+    adsetId: 'meta-adset-204',
+    platform: 'META',
+    name: 'DABA Dynamic Retargeting | Sepet Terk & Yüksek Niyetli Ziyaretçiler',
+    status: 'ACTIVE',
+    dailyBudget: 35.0,
+    spendToday: 24.8,
+    roasToday: 6.1,
+    ctr: 4.1,
+    cpc: 0.35,
+    linkedProductName: 'Nightfold DeepRest 3D Konturlu Uyku Maskesi',
+    linkedProductStock: 36714,
+    hasWarning: false,
+  },
+  {
+    id: 'meta-camp-105',
+    adsetId: 'meta-adset-205',
+    platform: 'META',
+    name: 'Broad Cold Traffic | AI UGC Video (Meta AI Disclosure Etiketli)',
+    status: 'PAUSED',
+    dailyBudget: 30.0,
+    spendToday: 18.5,
+    roasToday: 1.4,
+    ctr: 1.15,
+    cpc: 0.78,
+    linkedProductName: 'Nightfold DeepRest 3D Konturlu Uyku Maskesi',
+    linkedProductStock: 36714,
+    hasWarning: true,
+    warningText: {
+      tr: 'Düşük ROAS (1.4x). Kreatif kancasını yenileyin veya Advantage+ havuzuna aktarın.',
+      en: 'Low ROAS (1.4x). Refresh creative hook or merge into Advantage+ pool.',
+    },
+  },
+];
+
 export async function GET(request: NextRequest) {
   // Support query-param overrides (from localStorage-backed client calls)
   const searchParams = request.nextUrl.searchParams;
@@ -15,15 +97,32 @@ export async function GET(request: NextRequest) {
   const adAccountId = searchParams.get('adAccountId') || process.env.META_AD_ACCOUNT_ID;
 
   if (!token || !adAccountId || token === 'EAAxxxxxxx_your_meta_system_user_access_token_here') {
+    const totalSpend = DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.spendToday, 0);
+    const activeCamps = DEFAULT_NIGHTFOLD_CAMPAIGNS.filter((c) => c.status === 'ACTIVE');
+    const totalBudget = DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.dailyBudget, 0);
+    const blendedRoas = parseFloat(
+      (DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.roasToday * c.spendToday, 0) / totalSpend).toFixed(2)
+    );
+    const averageCpc = parseFloat(
+      (DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.cpc, 0) / DEFAULT_NIGHTFOLD_CAMPAIGNS.length).toFixed(2)
+    );
+    const averageCtr = parseFloat(
+      (DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.ctr, 0) / DEFAULT_NIGHTFOLD_CAMPAIGNS.length).toFixed(2)
+    );
+
     return NextResponse.json({
       isConnected: false,
-      message: 'Meta Ads bağlantısı henüz yapılmadı. Reklam verilerini analiz etmek için Meta Business hesabınızı bağlayın.',
-      campaigns: [],
+      isDemo: true,
+      message: 'Meta Ads bağlantısı henüz yapılmadı. Önizleme için Nightfold 2026 DTC simülasyon verileri gösteriliyor.',
+      campaigns: DEFAULT_NIGHTFOLD_CAMPAIGNS,
       stats: {
-        totalSpend: 0,
-        blendedRoas: 0,
-        averageCpc: 0,
-        averageCtr: 0,
+        totalSpend,
+        totalBudget,
+        blendedRoas,
+        averageCpc,
+        averageCtr,
+        activeCount: activeCamps.length,
+        totalCount: DEFAULT_NIGHTFOLD_CAMPAIGNS.length,
       },
     });
   }
@@ -103,6 +202,29 @@ export async function GET(request: NextRequest) {
       );
 
       const totalSpend = campaigns.reduce((acc: number, c: any) => acc + c.spendToday, 0);
+      const totalBudget = campaigns.reduce((acc: number, c: any) => acc + (c.dailyBudget || 0), 0);
+      const validRoas = campaigns.filter((c: any) => c.roasToday > 0);
+      const blendedRoas =
+        validRoas.length > 0
+          ? parseFloat(
+              (
+                validRoas.reduce((acc: number, c: any) => acc + c.roasToday * (c.spendToday || 1), 0) /
+                (totalSpend || 1)
+              ).toFixed(2)
+            )
+          : 0;
+      const averageCpc =
+        campaigns.length > 0
+          ? parseFloat(
+              (campaigns.reduce((acc: number, c: any) => acc + (c.cpc || 0), 0) / campaigns.length).toFixed(2)
+            )
+          : 0;
+      const averageCtr =
+        campaigns.length > 0
+          ? parseFloat(
+              (campaigns.reduce((acc: number, c: any) => acc + (c.ctr || 0), 0) / campaigns.length).toFixed(2)
+            )
+          : 0;
 
       return NextResponse.json({
         isConnected: true,
@@ -110,6 +232,10 @@ export async function GET(request: NextRequest) {
         campaigns,
         stats: {
           totalSpend,
+          totalBudget,
+          blendedRoas,
+          averageCpc,
+          averageCtr,
           activeCount: campaigns.filter((c: any) => c.status === 'ACTIVE').length,
           totalCount: campaigns.length,
         },

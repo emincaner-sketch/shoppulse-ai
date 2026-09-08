@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Store, Language, Currency } from '@/types';
 import { translations } from '@/lib/i18n/translations';
 import { PlanTier } from './PlanManagementModal';
@@ -14,6 +16,8 @@ import {
   SlidersHorizontal,
   Sparkles,
   RefreshCw,
+  LayoutDashboard,
+  Megaphone,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -55,6 +59,7 @@ export default function Navbar({
   onOpenCreativeStudio,
   onOpenConnectMeta,
 }: NavbarProps) {
+  const pathname = usePathname();
   const t = translations[language];
   const [storeDropdownOpen, setStoreDropdownOpen] = useState(false);
   const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
@@ -63,9 +68,9 @@ export default function Navbar({
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/[0.08] bg-[#09090b]/90 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
-        {/* Left: Brand & Store Switcher */}
-        <div className="flex items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-2">
+        {/* Left: Brand, Store Switcher & Navigation */}
+        <div className="flex items-center gap-3 sm:gap-5">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-100 font-mono font-semibold text-xs shadow-sm">
               SP
             </div>
@@ -73,7 +78,7 @@ export default function Navbar({
               <span className="text-sm font-semibold tracking-tight text-zinc-100">ShopPulse</span>
               <span className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase">AI</span>
             </div>
-          </div>
+          </Link>
 
           <div className="h-4 w-px bg-white/[0.08] hidden sm:block" />
 
@@ -84,7 +89,7 @@ export default function Navbar({
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/60 hover:bg-zinc-850 hover:border-white/15 text-xs text-zinc-200 transition-all font-medium"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
-              <span className="truncate max-w-[130px] sm:max-w-[170px]">{currentStore.name}</span>
+              <span className="truncate max-w-[110px] sm:max-w-[150px]">{currentStore.name}</span>
               <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
             </button>
 
@@ -143,10 +148,60 @@ export default function Navbar({
               </div>
             )}
           </div>
+
+          <div className="h-4 w-px bg-white/[0.08] hidden md:block" />
+
+          {/* Top Page Navigation */}
+          <nav className="hidden md:flex items-center gap-1.5">
+            <Link
+              href="/"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                pathname === '/'
+                  ? 'bg-zinc-800 text-white border border-white/10 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
+            </Link>
+
+            <Link
+              href="/ads"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                pathname === '/ads'
+                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+              }`}
+            >
+              <Megaphone className="w-3.5 h-3.5 text-blue-400" />
+              <span>{language === 'tr' ? 'Reklam Yöneticisi' : 'Meta Ads'}</span>
+              <span className="px-1 py-0.2 text-[9px] font-mono rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                Meta
+              </span>
+            </Link>
+          </nav>
         </div>
 
         {/* Right: Consolidated Controls */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Mobile quick page link */}
+          <Link
+            href={pathname === '/ads' ? '/' : '/ads'}
+            className="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/60 text-xs text-zinc-300 font-medium hover:bg-zinc-850 transition-colors"
+          >
+            {pathname === '/ads' ? (
+              <>
+                <LayoutDashboard className="w-3.5 h-3.5 text-zinc-300" />
+                <span>Dashboard</span>
+              </>
+            ) : (
+              <>
+                <Megaphone className="w-3.5 h-3.5 text-blue-400" />
+                <span>Ads</span>
+              </>
+            )}
+          </Link>
+
           {/* Subtle Health Score Pill */}
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs font-mono font-medium">
             <TrendingUp className="w-3 h-3 text-emerald-400" />
