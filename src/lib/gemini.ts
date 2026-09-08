@@ -67,11 +67,12 @@ export interface CreativeStudioResult {
  */
 export const DEFAULT_NIGHTFOLD_CONTEXT = {
   storeName: 'Nightfold',
-  domain: '7dyz3u-i1.myshopify.com',
+  domain: 'nightfold.store',
   currency: 'USD',
   mainProduct: {
     title: 'Nightfold DeepRest 3D Contoured Sleep Mask | 100% Blackout, Zero Lash Pressure',
     price: 34.99,
+    duoBundlePrice: 59.00,
     inventory: 36714,
     variants: ['Midnight Black', 'Stone Grey', 'Blush Pink'],
     features: [
@@ -107,26 +108,31 @@ export async function runGrowthAnalysis(
   if (gemini) {
     try {
       const prompt = `
-You are the Chief AI Growth Officer & E-Commerce Director for the DTC brand "${storeData.storeName}" (${storeData.domain}).
-PRODUCT CONTEXT:
+You are the Chief AI Growth Officer & E-Commerce Director for the DTC brand "${storeData.storeName}" (${storeData.domain || 'nightfold.store'}).
+PRODUCT & STORE CONTEXT:
 - Hero SKU: ${storeData.mainProduct.title}
-- Retail Price: $${storeData.mainProduct.price}
-- Available Inventory in Warehouse: ${storeData.mainProduct.inventory.toLocaleString()} units
-- Current Order Count: ${storeData.metrics.totalOrders} (Cold launch status)
-- Audience: Insomnia, light leakage frustration, REM sleep enhancement, travel
-- Direct Competitor: Manta Sleep PRO at $39.99 (Nightfold has a $5.00 price advantage)
+- Retail Unit Price: $${storeData.mainProduct.price} | Duo Bundle Offer: $59.00
+- Available Inventory in Warehouse: ${storeData.mainProduct.inventory.toLocaleString()} units ($1.28M inventory volume)
+- Current Order Count: ${storeData.metrics.totalOrders} (Cold launch status, target: first 100 orders)
+- Direct Competitor: Manta Sleep PRO at $39.99 (Nightfold has $5.00 price arbitrage advantage)
+
+2026 META ADS & DTC STRATEGIC FRAMEWORK:
+1. Campaign Architecture: Manual/ABO for creative testing ($20-$25/ad set); Advantage+ Campaign Budget and Advantage+ Sales (ASC) for scaling winners. Suggest verifying Ads Manager interface for learning phase thresholds.
+2. Creative & AI Compliance: 3-second Thumbstop Hook #1 is "Flashlight in Dark Room Test (100% Blackout proof)". Crucial warning: remind enabling Meta AI-generated content disclosure if using AI avatars/models to avoid silent distribution throttling.
+3. Unit Economics & De Minimis: Net Contribution Margin = AOV - (COGS + Shipping + Processing Fee + Customs/Tariffs). Factor in 2026 De Minimis tariff costs for international fulfillment. Duo Bundle at $59.00 safeguards AOV.
+4. Health & Measurement: EMQ ~6/10 is sufficient for launch; monitor internal returns and dispatch speeds since CFS is retired. Avoid fake scarcity countdowns.
 
 YOUR TASK:
 Generate a thorough, direct, highly professional growth diagnosis and 3 priority action cards.
 Output strictly valid JSON matching this exact structure:
 {
   "diagnosis": {
-    "tr": "Why there are 0 sales yet (focusing on traffic acquisition, lack of video proof, cold launch state) and the exact 3-step immediate remedy in Turkish.",
+    "tr": "Why there are 0 sales yet (focusing on traffic acquisition, lack of flashlight video proof, cold launch state) and the exact 3-step immediate remedy in Turkish.",
     "en": "Why there are 0 sales yet (traffic deficit, missing viral creative proof) and immediate remedy in English."
   },
   "strategicSummary": {
-    "tr": "One sentence executive directive for scaling in Turkish.",
-    "en": "One sentence executive directive for scaling in English."
+    "tr": "One sentence executive directive for scaling with ABO testing and Duo Bundle in Turkish.",
+    "en": "One sentence executive directive for scaling with ABO testing and Duo Bundle in English."
   },
   "actionCards": [
     {

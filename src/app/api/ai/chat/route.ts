@@ -7,26 +7,52 @@ import { getGeminiClient } from '@/lib/gemini';
  */
 
 const SYSTEM_PROMPT = `
-You are ShopPulse AI — a senior E-Commerce Director & Growth Strategist for the DTC brand Nightfold (nightfold.com).
+Sen ShopPulse AI — DTC markası Nightfold (nightfold.store) için Kıdemli E-Ticaret Direktörü ve Büyüme Stratejistisin (Senior E-Commerce Director & Growth Strategist).
 
-STORE CONTEXT (Real-Time Shopify Data):
-- Hero Product: Nightfold DeepRest 3D Contoured Sleep Mask
-- Retail Price: $34.99
-- Current Inventory: 36,714 units in warehouse
-- Total Orders: 0 (cold launch stage)
-- Key USPs: 100% Total Blackout, Deep 3D Eye Contours (Zero Lash Pressure), Memory Foam, Cooling Breathable Silk-blend
-- Direct Competitor: Manta Sleep PRO ($39.99) — Nightfold has a $5.00 price arbitrage advantage
-- Ad Channels: Meta Ads (Advantage+), TikTok Ads, Instagram Reels
-- Business Stage: Pre-launch, ready to scale via paid social and UGC content
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ROL & MAĞAZA BAĞLAMI:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Mağaza: Nightfold (nightfold.store)
+- Hero Ürün: Nightfold DeepRest 3D Konturlu Uyku Maskesi
+  • Temel Özellikler: %100 Zifiri Karanlık (Total Blackout), Derin 3D Göz Yuvaları (Sıfır Kirpik Baskısı / Lash Extension Safe), Hafızalı Sünger (Memory Foam), Nefes Alabilir Soğutucu İpek Karışım Kumaş.
+- Fiyatlandırma:
+  • Birim Satış Fiyatı: $34.99
+  • Duo Bundle Teklifi: $59.00 (2 Adet Maske — AOV yükseltici birincil teklif)
+- Envanter Durumu: Depoda 36.714 Adet hazır stok (Yaklaşık $1.28M Envanter Hacmi).
+- Mevcut Durum: Soğuk lansman (Cold Launch — 0 satış) fazı.
+- Temel Stratejik Hedef: İlk satışı gerçekleştirmek ve ilk 100 siparişi kârlı/sürdürülebilir birim ekonomisiyle yakalamak.
+- Doğrudan Rakip: Manta Sleep PRO ($39.99) — Nightfold $5.00 net fiyat arbitrajı avantajına ve üstün 3D ergonomiye sahiptir.
 
-RULES:
-1. Ground every recommendation in mathematical DTC data (AOV, margins, stock velocity, ad ROAS, bundle strategies, conversion psychology).
-2. Never give vague or generic advice — be specific with numbers, percentages, and actionable steps.
-3. Reference the actual store data above in your responses.
-4. Be direct, professional, and maintain an encouraging yet rigorous B2B SaaS tone.
-5. Keep responses concise (2-4 paragraphs max) but information-dense.
-6. When discussing pricing, always factor in the $5 arbitrage vs Manta Sleep PRO.
-7. Suggest specific creative angles, bundle configurations, or campaign structures when relevant.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026 META & DTC ALGORİTMA VE STRATEJİ İLKELERİ:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. KAMPANYA MİMARİSİ (2026 Meta Reklam Yapısı):
+   - Kreatif Test Fazı: Yeni kreatif ve kanca testleri için Manuel Bütçeleme / Reklam Seti Bütçesi (ABO - Ad Set Budget Optimization) mantığını kullan. Değişkenleri (kanca, görsel formatı, metin açısı) izole ederek bütçeyi adil dağıt.
+   - Kazananları Ölçekleme: Test fazında tutunup kazanan kreatifleri Advantage+ Campaign Budget (eski CBO) ve Advantage+ Sales Campaigns (eski ASC / Advantage+ Shopping) yapılarına taşıyarak ölçekle.
+   - Öğrenme Fazı (Learning Phase): "Haftada 50 dönüşüm" gibi öğrenme fazı eşiklerini dogmatik/mutlak görme; Ads Manager arayüzündeki anlık öğrenme durumunu ve teslimat sinyallerini kullanıcıya doğrulat.
+
+2. KREATİF & AI İÇERİK UYUMLULUĞU:
+   - İlk 3 Saniye Kancası (Thumbstop Rate): Soğuk trafik dönüşümünün anahtarıdır. Nightfold için 1 numaralı kanca: "Karanlık Odada Telefon Flaşı Testi (%100 Blackout kanıtı — kumaşa arkadan flaş tutulduğunda 0 lümen ışık sızması)".
+   - AI Üretimi İçerik Uyarısı (Meta AI Disclosure): Eğer kreatiflerde AI tarafından üretilmiş fotogerçekçi modeller/kullanıcılar veya avatar UGC'leri kullanılıyorsa, Meta Ads Manager'da "Yapay Zeka İçeriği / AI-generated content" etiketinin/açıklamasının MUTLAKA açılmasını hatırlat. Bu etiketin ihmal edilmesi durumunda algoritmanın 'sessiz dağıtım kısıtlaması' (silent distribution throttling / shadow suppression) uygulayabileceğini vurgula.
+
+3. BİRİM İKTİSADI (UNIT ECONOMICS) & 2026 DE MINIMIS UYARISI:
+   - Net Katkı Payı (Net Contribution Margin) Formülü:
+     Net Katkı Payı = AOV - (COGS + Kargo + İşlem Ücreti + Gümrük/Tarife)
+   - 2026 De Minimis & Gümrük Uyarısı: Uluslararası veya Çin tedarikli doğrudan gönderimlerde (direct fulfillment / dropshipping), 2026 De Minimis muafiyet eşiği düzenlemelerini ve potansiyel gümrük/tarife maliyetlerini kârlılık ve başabaş (break-even ROAS) hesaplamalarına mutlaka dahil et.
+   - AOV Güvenliği: $34.99 tekil satış yerine $59.00 Duo Bundle teklifiyle sepet ortalamasını büyüterek müşteri edinme maliyetini (CAC) güvenle sübvanse et.
+
+4. ÖLÇÜM VE HESAP SAĞLIĞI (ACCOUNT HEALTH):
+   - Olay Eşleme Kalitesi (EMQ): Meta CAPI / Pixel için ~6/10 puanını soğuk lansman aşamasında yeterli kabul et. 6/10 üzerindeki marjinal teknik takıntılar yerine zaman ve bütçeyi kreatif testlerine ve teklif optimizasyonuna yönlendir.
+   - Müşteri Geri Bildirim Skoru (CFS) Güncellemesi: Eski CFS skoru Meta arayüzünden kaldırıldığı için; hesap sağlığını doğrudan iade oranları, kargo teslimat süreleri ve müşteri şikayet sinyalleri üzerinden dahili panoda takip etmeyi öner.
+   - Etik Dönüşüm Psikolojisi: Sahte kıtlık sayaçları ("Son 3 ürün kaldı!") veya temelsiz aciliyet sayaçları kullanmaktan kaçın. Meta'nın yanıltıcı ticaret politikalarına takılmamak için depodaki gerçek envanter gücüne (36.714 adet) ve somut video kanıtlarına odaklan.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YANIT KURALLARI & FORMAT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Dil: Her zaman akıcı, profesyonel ve iş odaklı Türkçe yanıt ver (kullanıcı özellikle İngilizce istemedikçe).
+- Format: Net, maddeli, doğrudan aksiyon odaklı, paragraflara boğulmamış ve yüksek bilgi yoğunluğuna sahip olsun.
+- Rasyonel & Veriye Dayalı: Önerilerini matematiksel DTC verilerine (AOV, katkı payı, bütçe, ROAS, envanter hacmi) dayandır.
+- Teşhis & Aksiyon: Problemi doğrudan tespit et ve hemen uygulanabilir 1-2-3 adımlı aksiyon listesi sun.
 `;
 
 export async function POST(request: NextRequest) {
@@ -49,8 +75,8 @@ export async function POST(request: NextRequest) {
         let historyContext = '';
         if (conversationHistory.length > 0) {
           const recentHistory = conversationHistory.slice(-6); // Last 3 exchanges
-          historyContext = '\nCONVERSATION HISTORY:\n' + recentHistory.map((msg: any) =>
-            `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.text}`
+          historyContext = '\nGEÇMİŞ KONUŞMA BAĞLAMI:\n' + recentHistory.map((msg: any) =>
+            `${msg.role === 'user' ? 'Kullanıcı' : 'ShopPulse AI'}: ${msg.text}`
           ).join('\n') + '\n';
         }
 
@@ -58,12 +84,12 @@ export async function POST(request: NextRequest) {
           model: 'gemini-2.5-flash',
           contents: `${SYSTEM_PROMPT}
 ${historyContext}
-Language: Respond in ${language === 'tr' ? 'Turkish' : 'English'}.
-User Question: "${prompt}"
+Kullanıcı Dili: ${language === 'tr' ? 'Türkçe' : 'English'}.
+Kullanıcı Sorusu: "${prompt}"
 `,
           config: {
-            temperature: 0.45,
-            maxOutputTokens: 800,
+            temperature: 0.4,
+            maxOutputTokens: 1000,
           },
         });
 
@@ -97,11 +123,11 @@ User Question: "${prompt}"
             messages: [
               {
                 role: 'system',
-                content: `${SYSTEM_PROMPT}\nRespond in ${language === 'tr' ? 'Turkish' : 'English'}.`,
+                content: `${SYSTEM_PROMPT}\nYanıt Dili: ${language === 'tr' ? 'Türkçe' : 'English'}.`,
               },
               { role: 'user', content: prompt },
             ],
-            max_tokens: 600,
+            max_tokens: 800,
           }),
         });
 
@@ -111,7 +137,7 @@ User Question: "${prompt}"
           if (replyText) {
             return NextResponse.json({
               success: true,
-              reply: replyText,
+              reply: replyText.trim(),
               provider: 'openai',
               model: 'gpt-4o',
               isLiveAi: true,
@@ -136,8 +162,8 @@ User Question: "${prompt}"
           },
           body: JSON.stringify({
             model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 600,
-            system: `${SYSTEM_PROMPT}\nRespond in ${language === 'tr' ? 'Turkish' : 'English'}.`,
+            max_tokens: 800,
+            system: `${SYSTEM_PROMPT}\nYanıt Dili: ${language === 'tr' ? 'Türkçe' : 'English'}.`,
             messages: [{ role: 'user', content: prompt }],
           }),
         });
@@ -148,7 +174,7 @@ User Question: "${prompt}"
           if (replyText) {
             return NextResponse.json({
               success: true,
-              reply: replyText,
+              reply: replyText.trim(),
               provider: 'anthropic',
               model: 'claude-3.5-sonnet',
               isLiveAi: true,
@@ -160,12 +186,12 @@ User Question: "${prompt}"
       }
     }
 
-    // 4. Final fallback: Intelligent heuristic engine
+    // 4. Final fallback: Intelligent 2026 DTC Growth Engine Heuristic
     return NextResponse.json({
       success: true,
       reply: generateHeuristicReply(prompt, language),
-      provider: 'nightfold-heuristics',
-      model: 'dtc-growth-engine-v3',
+      provider: 'nightfold-heuristics-2026',
+      model: 'meta-dtc-growth-engine-2026',
       isLiveAi: false,
     });
   } catch (error: any) {
@@ -178,37 +204,198 @@ User Question: "${prompt}"
 }
 
 /**
- * Keyword-aware heuristic fallback when no LLM API key is configured.
+ * 2026 Meta Ads & DTC Heuristic Engine with Unit Economics Intelligence
  */
 function generateHeuristicReply(prompt: string, language: string): string {
   const lower = prompt.toLowerCase();
 
-  if (lower.includes('dönüşüm') || lower.includes('conversion') || lower.includes('satış') || lower.includes('order') || lower.includes('sipariş')) {
+  // 1. DÖNÜŞÜM & SİPARİŞ / SATIŞ
+  if (lower.includes('dönüşüm') || lower.includes('conversion') || lower.includes('satış') || lower.includes('order') || lower.includes('sipariş') || lower.includes('ilk')) {
     return language === 'tr'
-      ? '📊 Nightfold DeepRest 3D Uyku Maskesi şu an canlı katalogda 36.714 adet stokla hazır bekliyor ancak henüz 0 sipariş kaydedilmiş.\n\n🎯 Temel tıkanıklık: Soğuk trafik hunisinde kanca (hook) eksikliği. TikTok ve Instagram Reels için "100% Karartma (Zero Light Leak)" temalı 3 saniyelik kreatif kancalar üretmenizi öneriyorum.\n\n💡 Hemen uygulanabilir aksiyonlar:\n• Sepette "2. Ürüne %40 İndirim" uyku seti teklifi sunun\n• Ürün sayfasına telefon flaşı testi UGC videosu ekleyin\n• İlk 100 siparişe özel %15 kupon pop-up tanımlayın\n\nBu üç hamle birlikte dönüşüm oranınızı tahminen %25-30 artıracaktır.'
-      : '📊 Nightfold DeepRest 3D Sleep Mask has 36,714 units in stock but records 0 orders so far.\n\n🎯 Primary bottleneck: Missing stop-scroll hooks in the cold traffic funnel. I recommend creating 3-second TikTok/Reels hooks themed around "100% Blackout – Zero Light Leak."\n\n💡 Immediate actions:\n• Launch a "Buy 1, Get 2nd at 40% Off" couples sleep set\n• Add a flashlight test UGC video to the product page\n• Deploy a 15% exit-intent coupon for the first 100 orders\n\nThese three moves combined should lift your conversion rate by 25-30%.';
+      ? `📊 **Nightfold Büyüme Teşhisi — İlk Satış & İlk 100 Sipariş Yol Haritası**
+
+Mağazada **36.714 adet stok ($1.28M hacim)** hazır ancak henüz soğuk lansman (0 sipariş) aşamasındasınız. Problem ürün veya fiyatta değil; soğuk trafik hunisinde kanıt temelli kanca eksikliğinde.
+
+🎯 **2026 Doğrudan Aksiyon Planı:**
+• **1 Numaralı Kanca Devreye Alın:** 3 saniyelik "Karanlık Odada Telefon Flaşı Testi" (%100 Blackout kanıtı) videosunu ürün sayfası üst bandına ve reklamlara yerleştirin.
+• **Duo Bundle Teklifi ($59.00):** $34.99 tekil satış yerine "2 Adet Al $59 Öde" paketini öne çıkararak AOV'yi yükseltin ve CAC baskısını absorbe edin.
+• **İlk 100 Sipariş Karşılama İndirimi:** Çıkış niyetli (exit-intent) %15 hoş geldin pop-up'ı tanımlayın.
+• **Güven & Etik Dönüşüm:** Sahte kıtlık sayaçları yerine gerçek 36.714 adetlik depo güvenini ve 30 gün para iade garantisini vurgulayın.
+
+Bu hamleler sepet tamamlama oranını anında %25-30 bandında yukarı çekecektir.`
+      : `📊 **Nightfold Growth Diagnosis — Path to First Sale & First 100 Orders**
+
+Warehouse holds **36,714 units ($1.28M inventory volume)**, currently at cold launch (0 orders). Bottleneck is not product quality or pricing, but missing proof hooks in cold traffic.
+
+🎯 **2026 Action Plan:**
+• **Deploy #1 Proof Hook:** 3-second "Flashlight in Dark Room Test" (100% Blackout proof) on product hero & ads.
+• **Duo Bundle Offer ($59.00):** Feature the 2-pack bundle to lift AOV and absorb cold acquisition CAC.
+• **Welcome Exit-Intent:** 15% discount pop-up for the first 100 buyers.
+• **Ethical Scarcity:** Replace fake countdowns with verified warehouse stock backing and 30-night trial.`;
   }
 
+  // 2. KAMPANYA MİMARİSİ / REKLAM / META 2026 / BÜTÇE
+  if (lower.includes('reklam') || lower.includes('meta') || lower.includes('kampanya') || lower.includes('bütçe') || lower.includes('budget') || lower.includes('ads') || lower.includes('abo') || lower.includes('cbo') || lower.includes('asc')) {
+    return language === 'tr'
+      ? `📈 **2026 Meta Reklam Mimarisi & Bütçe Stratejisi**
+
+Nightfold DeepRest için soğuk lansmandan ölçeklemeye geçiş yapısı:
+
+1️⃣ **Kreatif Test Fazı (Manuel / ABO):**
+• Yeni kanca ve kreatifleri test ederken bütçeyi Ad Set düzeyinde (ABO) tutun.
+• Reklam seti başına günlük $20-$25 bütçeyle 3 farklı kanca (Flaş Testi, Kirpik Baskısız 3D, Vardiyalı Uyku) test edin.
+• Değişkenleri izole edin; bütçenin tek bir görsele kaçmasını önleyin.
+
+2️⃣ **Ölçekleme Fazı (Advantage+ & ASC):**
+• Testte kazanan (CTR > %2.0, CPC < $1.50) kreatifleri **Advantage+ Campaign Budget** (eski CBO) ve **Advantage+ Sales (ASC)** kampanyalarına taşıyın.
+• Günlük $50 başlangıç bütçesi belirleyin; ilk 72 saat stabil kaldığında bütçeyi %20 kademeli artırın.
+
+3️⃣ **Öğrenme Fazı & EMQ Kuralı:**
+• 50 dönüşüm eşiğini katı bir kural görmeyin; Ads Manager panelindeki öğrenme durumunu kontrol edin.
+• Olay Eşleme Kalitesi (EMQ) ~6/10 seviyesindeyse soğuk faz için yeterlidir; teknik detaylarda boğulmayıp kreatif testine odaklanın.`
+      : `📈 **2026 Meta Campaign Architecture & Budget Strategy**
+
+Structured progression from cold launch to scale for Nightfold:
+
+1️⃣ **Creative Testing (Manual / ABO):**
+• Use Ad Set Budget Optimization (ABO) at $20-$25/day per ad set to isolate variables (Flashlight test vs Zero Lash Pressure).
+2️⃣ **Scaling (Advantage+ & ASC):**
+• Migrate winners (CTR > 2.0%, CPC < $1.50) into Advantage+ Campaign Budget & Advantage+ Sales Campaigns.
+3️⃣ **Learning Phase & EMQ:**
+• Treat learning phase thresholds pragmatically. EMQ ~6/10 is sufficient for launch; prioritize creative iteration over micro-tuning.`;
+  }
+
+  // 3. KREATİF, VİDEO, UGC & AI UYUMLULUĞU
+  if (lower.includes('kreatif') || lower.includes('video') || lower.includes('içerik') || lower.includes('content') || lower.includes('ugc') || lower.includes('ai') || lower.includes('kanca') || lower.includes('hook') || lower.includes('tiktok') || lower.includes('reels')) {
+    return language === 'tr'
+      ? `🎬 **2026 Kreatif Stratejisi & AI İçerik Uyumluluk Rehberi**
+
+🎯 **İlk 3 Saniye Kancaları (Thumbstop Formülleri):**
+1. **Telefon Flaşı Testi (1 Numaralı Kanca):** Karanlık odada maskenin arkasına telefon flaşı tutulur — 0 lümen sızıntı görsel kanıtı.
+2. **Kirpik Baskı Karşılaştırması:** Yandan makro çekim; göz kırparken kirpiklerin derin 3D çukura hiç değmediği yavaş çekim.
+3. **Pazar Karşılaştırması:** "Manta Sleep'e $40 vermeden önce bunu görün — aynı 3D ergonomi $34.99."
+
+⚠️ **Önemli 2026 Meta AI İçerik Uyarısı:**
+• Reklamlarınızda AI ile üretilmiş fotogerçekçi modeller, yüzler veya sentetik sesler kullanıyorsanız; Meta Ads Manager panelinde **"Yapay Zeka İçeriği / AI Disclosure"** etiketini kesinlikle aktif hale getirin!
+• Bu etiket açılmazsa Meta algoritması reklamınıza **sessiz dağıtım kısıtlaması (silent distribution throttling)** uygulayabilir ve erişimi dramatik şekilde düşürebilir.`
+      : `🎬 **2026 Creative Strategy & AI Content Compliance**
+
+🎯 **Top 3-Second Hooks (Thumbstop):**
+1. **Flashlight Blackout Test (#1 Hook):** Smartphone flashlight pressed against mask in dark room — 0% lumen penetration proof.
+2. **Zero Lash Pressure:** Macro side profile showing blink clearance.
+3. **Price Arbitrage:** "$40 for Manta vs $34.99 for Nightfold."
+
+⚠️ **Critical 2026 Meta AI Content Disclosure:**
+• If your creatives use AI-generated photorealistic models or synthetic voices, enable the **"AI-Generated Content"** label in Ads Manager.
+• Omitting this label risks silent distribution throttling by Meta's compliance algorithm.`;
+  }
+
+  // 4. BİRİM İKTİSADI, DE MINIMIS & FİYAT / KÂRLILIK
+  if (lower.includes('ekonomi') || lower.includes('de minimis') || lower.includes('gümrük') || lower.includes('tarife') || lower.includes('katkı payı') || lower.includes('maliyet') || lower.includes('cogs') || lower.includes('margin') || lower.includes('kâr')) {
+    return language === 'tr'
+      ? `💰 **Birim İktisadı (Unit Economics) & 2026 De Minimis Hesaplaması**
+
+DTC kârlılığının omurgası Net Katkı Payıdır (Net Contribution Margin):
+
+📐 **Formül:**
+\`Net Katkı Payı = AOV - (COGS + Kargo + İşlem Ücreti + Gümrük/Tarife)\`
+
+🔍 **Nightfold İçin Hesaplama Örneği:**
+• **Tekil Ürün ($34.99):** COGS (~$6.50) + Kargo (~$4.50) + Stripe/Shopify (%2.9 + $0.30 = ~$1.31) = Toplam Değişken Maliyet ~$12.31.
+  ↳ Ham Katkı Payı: ~$22.68. Reklam CAC tavanı: $18.00 olmalıdır.
+• **Duo Bundle ($59.00 — Önerilen):** 2 adet COGS (~$12.00) + Birleşik Kargo (~$5.50) + İşlem Ücreti (~$2.01) = Toplam ~$19.51.
+  ↳ Net Katkı Payı: ~$39.49. CAC tavanı $30+'a çıkar, reklamlarda çok daha rahat ölçeklenirsiniz.
+
+⚠️ **2026 De Minimis & Gümrük Uyarısı:**
+Uluslararası veya Çin menşeili doğrudan gönderimlerde 2026 De Minimis muafiyet değişikliklerini göz önünde bulundurun. Gönderi başına olası $2-$4 gümrük/tarife ek maliyetini hesaplamalarınıza dahil ederek başabaş ROAS hedefinizi güncelleyin.`
+      : `💰 **Unit Economics & 2026 De Minimis Intelligence**
+
+📐 **Net Contribution Margin Formula:**
+\`Net Contribution Margin = AOV - (COGS + Shipping + Processing Fee + Customs/Tariffs)\`
+
+🔍 **Nightfold Unit Economics:**
+• **Single Unit ($34.99):** Variable costs ~$12.31 ➔ Contribution margin ~$22.68 (Max target CAC ~$18.00).
+• **Duo Bundle ($59.00):** Variable costs ~$19.51 ➔ Contribution margin ~$39.49 (Absorbs up to $30+ CAC comfortably).
+
+⚠️ **2026 De Minimis Alert:**
+Include potential $2-$4 customs/tariff charges in international fulfillment to protect break-even ROAS.`;
+  }
+
+  // 5. RAKİP ANALİZİ & MANTA SLEEP
   if (lower.includes('rakip') || lower.includes('competitor') || lower.includes('manta') || lower.includes('fiyat') || lower.includes('price')) {
     return language === 'tr'
-      ? '🏆 Rakip Analizi: Manta Sleep PRO şu anda $39.99 seviyesinde fiyatlandırılmış.\n\nNightfold ($34.99) olarak tam $5.00 net fiyat avantajına ve 3D derin göz oyukları (sıfır göz baskısı) ergonomisine sahipsiniz. Bu çift avantajı reklam kopyalarınızda kullanmalısınız.\n\n🎯 Önerilen A/B test reklam kancası: "Neden $40 veresiniz? Aynı 3D ergonomi $34.99 — üstelik kirpiklerinize sıfır baskı."\n\n📈 Bu mesajlaşma stratejisi CTR\'yi %35 artıracak ve CPC\'yi düşürecektir.'
-      : '🏆 Competitor Analysis: Manta Sleep PRO retails at $39.99.\n\nNightfold ($34.99) has a $5.00 immediate price arbitrage advantage plus zero-pressure 3D contoured eye cups. You should leverage this dual advantage in your ad copy.\n\n🎯 Recommended A/B test hook: "Why pay $40+ for a sleep mask? Same 3D contour, $34.99 — with zero lash pressure."\n\n📈 This messaging strategy should drive a 35% lift in CTR and lower CPC.';
+      ? `🏆 **Rakip Analizi: Nightfold vs Manta Sleep PRO**
+
+• **Manta Sleep PRO Fiyatı:** $39.99
+• **Nightfold DeepRest Fiyatı:** $34.99 (Net **$5.00 Fiyat Arbitrajı**)
+• **Duo Bundle Avantajı:** Nightfold 2'li paket $59.00 (Adet başı $29.50)
+
+🎯 **Reklam Kanca Formülü:**
+"Neden aynı 3D hafızalı sünger ergonomisine $40 veresiniz? Nightfold $34.99 — üstelik kirpiklerinize sıfır baskı ve %100 karartma garantisiyle."
+
+📈 Bu kıyaslama açısı yüksek niyetli alıcılarda tıklama oranını (CTR) %35 artırır ve CPC maliyetini düşürür.`
+      : `🏆 **Competitor Breakdown: Nightfold vs Manta Sleep PRO**
+
+• **Manta Sleep PRO:** $39.99
+• **Nightfold DeepRest:** $34.99 ($5.00 direct arbitrage advantage)
+• **Duo Bundle:** 2 for $59.00 ($29.50/unit)
+
+🎯 **Ad Hook Formula:**
+"Why pay $40 for a 3D mask? Get identical zero-lash contour with Nightfold for $34.99 with guaranteed 100% blackout."`;
   }
 
-  if (lower.includes('stok') || lower.includes('inventory') || lower.includes('reklam') || lower.includes('bütçe') || lower.includes('budget') || lower.includes('ads')) {
+  // 6. ÖLÇÜM, HESAP SAĞLIĞI & CFS
+  if (lower.includes('sağlık') || lower.includes('health') || lower.includes('cfs') || lower.includes('emq') || lower.includes('pixel') || lower.includes('capi') || lower.includes('ölçüm')) {
     return language === 'tr'
-      ? '📦 Stok & Reklam Bütçesi Analizi:\n\nDepoda 36.714 adet Nightfold DeepRest stoku mevcut — bu $1.28M potansiyel envanter değerine karşılık gelir. Bu yüksek hacim, Meta Advantage+ kampanyalarında günlük bütçeyi güvenle ölçeklendirmenize olanak tanır.\n\n💰 Bütçe önerisi: Günlük $50 ile başlayıp, CTR %2+ ve CPC $1.50 altında kalırsa 72 saat içinde $100/gün\'e çıkın.\n\n🎯 Stok maliyetini hızla nakite döndürmek için "İkili Alımda 2. Ürün $24 (Duo Bundle: $59)" teklifini ana sayfada öne çıkarın.'
-      : '📦 Inventory & Ad Budget Analysis:\n\nYou hold 36,714 units ($1.28M inventory value). This volume allows safe scaling of Meta Advantage+ ad spend without stockout risk.\n\n💰 Budget recommendation: Start at $50/day, and if CTR hits 2%+ with CPC below $1.50, scale to $100/day within 72 hours.\n\n🎯 To accelerate cash conversion, feature a "Duo Bundle at $59.00 (2nd mask at $24)" on your storefront hero section.';
+      ? `🩺 **Hesap Sağlığı & Ölçümleme Rehberi (2026 Standartları)**
+
+1️⃣ **Olay Eşleme Kalitesi (EMQ):**
+• Meta CAPI/Pixel için ~6/10 eşiği soğuk lansman için yeterlidir.
+• 6/10'dan 8/10'a çıkmak için harcanacak efor yerine bütçeyi kreatif testlerine ayırın.
+
+2️⃣ **Müşteri Geri Bildirim Skoru (CFS) Güncellemesi:**
+• Eski CFS skoru Meta arayüzünden kaldırılmıştır.
+• Hesap sağlığınızı korumak için dahili panoda: İade oranı (< %3), ortalama teslimat süresi (3-5 iş günü) ve müşteri bilet çözüm süresini izleyin.
+
+3️⃣ **Etik Dönüşüm İlkeleri:**
+• Sahte kıtlık ve temelsiz sayaçlardan kaçının. Gerçek 36.714 adetlik stok gücünü şeffafça yansıtın.`
+      : `🩺 **Account Health & Measurement (2026 Standards)**
+
+1️⃣ **Event Match Quality (EMQ):**
+• ~6/10 is sufficient for cold launch phase. Prioritize creative testing over technical micro-tuning.
+2️⃣ **CFS Metric Retirement:**
+• Track health via internal metrics: Return rate (<3%), delivery speed, and customer ticket resolution.
+3️⃣ **Ethical Scarcity:**
+• Avoid artificial stock countdowns. Leverage verified 36,714 warehouse units transparently.`;
   }
 
-  if (lower.includes('tiktok') || lower.includes('reels') || lower.includes('video') || lower.includes('içerik') || lower.includes('content') || lower.includes('ugc')) {
-    return language === 'tr'
-      ? '🎬 TikTok & Reels İçerik Stratejisi:\n\n3 saniyelik stop-scroll kanca formülleri:\n\n1️⃣ "Telefon Flaşı Testi" — Maskenin arkasına flaş tutulup 0 ışık sızıntısı kanıtlanır\n2️⃣ "Kirpik Baskı Karşılaştırması" — 3D çukurun kirpiklere hiç değmediği yavaş çekim\n3️⃣ "Rakiple Yan Yana" — Nightfold vs düz maske kalınlık karşılaştırması\n\n📊 En iyi performans gösteren UGC trendleri: Karanlık oda aydınlatma, ASMR kutu açılış, "Bunu Biliyor Muydunuz?" formatları.\n\n🎯 İçerik Stüdyosu\'nu açarak AI destekli reklam metinleri ve senaryo şablonları üretebilirsiniz.'
-      : '🎬 TikTok & Reels Content Strategy:\n\n3-second stop-scroll hook formulas:\n\n1️⃣ "Flashlight Test" — Flashlight held behind mask proving 0% light leakage\n2️⃣ "Lash Pressure Comparison" — Slow-mo showing 3D contour hovering over lashes\n3️⃣ "Side-by-Side" — Nightfold vs flat mask thickness comparison\n\n📊 Top-performing UGC trends: Dark room lighting, ASMR unboxing, "Did You Know?" formats.\n\n🎯 Open the Creative Studio to generate AI-powered ad copy and script templates.';
-  }
-
-  // Default comprehensive response
+  // DEFAULT COMPREHENSIVE EXECUTIVE SUMMARY
   return language === 'tr'
-    ? '🚀 Nightfold Büyüme Direktörü Özeti:\n\n📊 Mevcut Durum: 36.714 adet stok ($1.28M potansiyel envanter değeri) aktif, 0 sipariş — soğuk lansman aşamasındasınız.\n\n🎯 1 Numaralı Öncelik: TikTok 3 saniyelik "Karanlık Odada Flaş Testi" kancasını devreye alarak ilk 100 siparişi yakalamak.\n\n💰 Paket Stratejisi: İkili paket (Duo Bundle) $59.00 fiyatla sepet ortalamanızı güvenceye alın (AOV artışı +%68).\n\n📈 Meta Ads: $50/gün bütçeyle Advantage+ Shopping kampanyası başlatın, 72 saat sonra CPC ve CTR metriklerine göre ölçekleyin.\n\nBana herhangi bir konuda detay sorabilirsiniz — dönüşüm, rakip analizi, reklam bütçesi, içerik stratejisi veya fiyatlama.'
-    : '🚀 Nightfold Growth Director Summary:\n\n📊 Current State: 36,714 units ($1.28M inventory pipeline) ready, 0 orders — you are in cold launch stage.\n\n🎯 Priority #1: Launch 3-second TikTok "Flashlight Blackout Test" hooks to capture the first 100 orders.\n\n💰 Bundle Strategy: Duo Bundle at $59.00 to secure robust AOV (+68% lift).\n\n📈 Meta Ads: Start with $50/day Advantage+ Shopping campaign, scale based on CPC/CTR metrics after 72 hours.\n\nAsk me about any topic — conversions, competitor analysis, ad budget, content strategy, or pricing.';
+    ? `🚀 **Nightfold E-Ticaret & Büyüme Direktörü Özeti**
+
+📊 **Mağaza Durumu:**
+• **Stok:** 36.714 adet ($1.28M envanter hacmi) depoda hazır.
+• **Durum:** Soğuk lansman (0 satış) — Ana hedef ilk satışı ve ilk 100 siparişi yakalamak.
+• **Fiyat:** Tekil $34.99 (Manta Sleep'e göre $5 daha avantajlı) | Duo Bundle $59.00.
+
+🎯 **Öncelikli Eylem Planı:**
+1. **Kreatif:** 3 saniyelik "Karanlık Odada Telefon Flaşı Testi (%100 Blackout kanıtı)" videosunu yayınlayın. (AI modeller varsa Meta AI etiketini açın!).
+2. **Kampanya:** Yeni kreatifleri Manuel/ABO ile test edin; kazananları Advantage+ ve ASC kampanyalarına taşıyın.
+3. **Birim İktisadı:** Net Katkı Payı = AOV - (COGS + Kargo + İşlem Ücreti + De Minimis/Tarife). $59 Duo Bundle ile kârlılığı güvenceye alın.
+4. **Hesap Sağlığı:** EMQ ~6/10 yeterlidir. CFS kalktığı için iade oranı ve teslimat sürelerini iç panoda izleyin.
+
+Bana sormak istediğiniz konuyu yazabilirsiniz: Kampanya mimarisi, kreatif senaryoları, De Minimis veya birim iktisadı!`
+    : `🚀 **Nightfold Growth Director Executive Summary**
+
+📊 **Store Status:**
+• **Inventory:** 36,714 units ($1.28M volume) ready in warehouse.
+• **Phase:** Cold launch (0 orders) — Core objective: First sale & first 100 orders.
+• **Pricing:** $34.99 Single ($5 advantage vs Manta Sleep) | $59.00 Duo Bundle.
+
+🎯 **Priority Action Plan:**
+1. **Creative:** Launch 3-second Flashlight Blackout Test hooks (enable Meta AI label if using AI avatars).
+2. **Campaign:** Manual/ABO for creative testing; scale winners into Advantage+ & ASC.
+3. **Unit Economics:** Optimize Net Contribution Margin with $59 Duo Bundle and factor 2026 De Minimis tariffs.
+4. **Health:** Maintain EMQ ~6/10; monitor internal return and dispatch metrics.`;
 }
+

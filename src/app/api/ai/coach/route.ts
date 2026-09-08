@@ -11,15 +11,20 @@ interface AICoachRequestBody {
  * System prompt for ShopPulse AI Coach based on PRD Bölüm 11.1
  */
 const SYSTEM_PROMPT = `
-You are ShopPulse AI's principal E-Commerce Director & Growth Strategist for the DTC brand Nightfold (nightfold.com).
-Your task: Provide concise, high-impact, actionable advice based on store analytics and audience dynamics.
-Hero Product: Nightfold DeepRest 3D Contoured Sleep Mask ($34.99, 36,714 inventory, 100% blackout, zero lash pressure).
-Direct Competitor: Manta Sleep PRO ($39.99).
-Current Stage: Cold launch, 0 orders, ready to scale via Meta and TikTok ads.
-Rules:
-1. Ground advice in mathematical DTC data (AOV, margins, stock velocity, ad ROAS, bundle strategies).
-2. Never give vague or generic advice.
-3. Be direct, professional, and maintain an encouraging yet rigorous B2B SaaS tone.
+Sen ShopPulse AI — DTC markası Nightfold (nightfold.store) için Baş Büyüme Koçu ve E-Ticaret Direktörüsün (Head of Growth & E-Commerce Director).
+
+MAĞAZA VE ÜRÜN BAĞLAMI:
+- Mağaza: Nightfold (nightfold.store)
+- Hero Ürün: Nightfold DeepRest 3D Konturlu Uyku Maskesi ($34.99 birim fiyat, $59.00 Duo Bundle teklifi)
+- Envanter Durumu: Depoda 36.714 Adet hazır stok ($1.28M Envanter Hacmi)
+- Mevcut Aşama: Soğuk lansman (0 sipariş) fazı. Ana hedef: İlk satışı ve ilk 100 siparişi yakalamak.
+- Doğrudan Rakip: Manta Sleep PRO ($39.99) — Nightfold $5.00 net fiyat arbitrajına ve üstün 3D göz çukuru ergonomisine sahiptir.
+
+2026 META & DTC İLKELERİ:
+1. Kampanya Mimarisi: Yeni testler için Manuel/ABO; kazananları ölçeklemek için Advantage+ Campaign Budget ve Advantage+ Sales (ASC).
+2. Kreatif & AI Uyumluluğu: İlk 3 saniye kancası kritik. 1 numaralı kanca: "Karanlık Odada Telefon Flaşı Testi (%100 Blackout kanıtı)". AI içeriklerde Meta AI etiketini hatırlat (sessiz dağıtım kısıtlamasını önlemek için).
+3. Birim İktisadı: Net Katkı Payı = AOV - (COGS + Kargo + İşlem Ücreti + Gümrük/Tarife). 2026 De Minimis gümrük maliyetlerini dahil et. $59 Duo Bundle ile AOV'yi koru.
+4. Ölçüm ve Sağlık: EMQ ~6/10 yeterlidir. CFS kalktığı için iade oranı ve kargo sürelerini iç panoda takip et. Sahte sayaçlardan kaçın.
 `;
 
 export async function POST(request: NextRequest) {
@@ -142,11 +147,11 @@ User Question / Strategy Request: "${prompt}"
     // 4. Multi-Tier Graceful Degradation (Nightfold DTC Growth Engine)
     let reply = '';
 
-    if (lowerPrompt.includes('dönüşüm') || lowerPrompt.includes('conversion')) {
+    if (lowerPrompt.includes('dönüşüm') || lowerPrompt.includes('conversion') || lowerPrompt.includes('sipariş')) {
       reply =
         language === 'tr'
-          ? 'Nightfold için dönüşüm hunisindeki en büyük eksik: Ürün sayfasında "Işık Sızdırma / Telefon Flaşı" video kanıtının bulunmaması. 3D göz çukurunun kirpiklere baskı yapmadığını gösteren 10 saniyelik bir UGC video ve ilk siparişe özel sepette %15 kupon pop-up\'ı tanımlamanız dönüşüm oranınızı anında %28 yukarı çekecektir.'
-          : 'For Nightfold, the #1 conversion blocker is the lack of video proof on the product page. Adding a 10-second UGC clip demonstrating zero light penetration and eyelash clearance plus an exit-intent 15% discount will lift conversion by 28%.';
+          ? 'Nightfold dönüşüm hunisi için öncelikli reçete: 3 saniyelik "Karanlık Odada Telefon Flaşı Testi (%100 Blackout kanıtı)" videosunu ürün sayfası vitrinine ekleyin. $34.99 tekil ürün yerine $59.00 Duo Bundle (2 Adet Maske) teklifini öne çıkararak AOV yükseltin ve sepette ilk siparişe özel %15 hoş geldin pop-up\'ı tanımlayın.'
+          : 'Priority conversion playbook for Nightfold: Add the 3-second "Flashlight Blackout Test" video proof to hero section. Lead with the $59.00 Duo Bundle to elevate AOV, and deploy a 15% exit-intent incentive for the first 100 orders.';
     } else if (
       lowerPrompt.includes('rakip') ||
       lowerPrompt.includes('competitor') ||
@@ -156,25 +161,25 @@ User Question / Strategy Request: "${prompt}"
     ) {
       reply =
         language === 'tr'
-          ? 'Pazar lideri Manta Sleep PRO şu an $39.99\'dan satılıyor. Nightfold DeepRest ($34.99) olarak tam $5.00 fiyat avantajına sahibiz. Meta reklam kancalarında "Neden $40 veresiniz? Aynı 3D ergonomi $34.99" temasını işlemek tıklama oranını (CTR) %35 artıracaktır.'
-          : 'Market incumbent Manta Sleep PRO retails at $39.99. Nightfold ($34.99) has an immediate $5.00 price advantage. Running comparison hooks such as "Why pay $40+ for a sleep mask? Same 3D contour at $34.99" will drive a 35% lift in CTR.';
-    } else if (lowerPrompt.includes('stok') || lowerPrompt.includes('inventory') || lowerPrompt.includes('reklam') || lowerPrompt.includes('bütçe')) {
+          ? 'Manta Sleep PRO $39.99 seviyesinde fiyatlandırılmışken Nightfold DeepRest ($34.99) ile net $5.00 fiyat avantajına sahibiz. Reklam setlerinizde "Neden $40 veresiniz? Aynı 3D ergonomi ve sıfır kirpik baskısı $34.99" kıyaslama kancasını test edin; bu açı CTR\'yi %35 artıracaktır.'
+          : 'Market incumbent Manta Sleep PRO retails at $39.99. Nightfold ($34.99) gives you an immediate $5.00 price advantage. Comparison hooks like "Why pay $40 for a 3D sleep mask? Same contour at $34.99" will drive a 35% lift in CTR.';
+    } else if (lowerPrompt.includes('stok') || lowerPrompt.includes('inventory') || lowerPrompt.includes('reklam') || lowerPrompt.includes('bütçe') || lowerPrompt.includes('meta')) {
       reply =
         language === 'tr'
-          ? 'Depoda 36.714 adet Nightfold DeepRest stoku mevcut. Bu yüksek hacim, Meta Advantage+ kampanyalarında günlük bütçeyi güvenle ölçeklendirmenize olanak tanır. Stok maliyetini hızla nakite döndürmek için "İkili Alımda 2. Ürün $24 (Duo Bundle: $59)" teklifi önerilir.'
-          : 'You hold 36,714 units of Nightfold DeepRest in warehouse inventory. This volume allows safe scaling of Meta Advantage+ ad spend without stockout risk. Deploying a "2-Pack Duo Bundle at $59.00" will accelerate cash conversion.';
+          ? 'Depoda 36.714 adet ($1.28M hacim) hazır stok bulunuyor. 2026 Meta reklam mimarisine göre: Yeni kanca testlerini Reklam Seti Bütçesi (ABO - günlük $20-$25) ile yapın, kazananları Advantage+ Campaign Budget ve Advantage+ Sales (ASC) kampanyalarına taşıyın. AI kreatifler kullanılıyorsa Meta AI etiketini açmayı unutmayın.'
+          : 'You hold 36,714 units ($1.28M volume) in warehouse stock. In 2026 Meta architecture: Test creatives via Ad Set Budget (ABO at $20-$25/day), then scale winners into Advantage+ and ASC. Remember to enable Meta AI disclosure if using synthetic avatars.';
     } else {
       reply =
         language === 'tr'
-          ? 'Nightfold mağazasının 1 numaralı büyüme önceliği: Depodaki 36.714 adet stoğu harekete geçirmek için TikTok 3 saniyelik "Karanlık Odada Flaş Testi" kancasını devreye almak ve ilk 100 siparişi yakalamaktır. İkili paket (Duo Bundle) $59.00 fiyatla sepet ortalamanızı güvenceye alır.'
-          : 'Nightfold\'s #1 strategic priority: Mobilize your 36,714 warehoused units by launching 3-second TikTok "Flashlight Blackout Test" video hooks to capture the first 100 orders. Duo bundle pricing at $59.00 ensures robust contribution margin.';
+          ? 'Nightfold büyüme direktörü aksiyon planı: Soğuk lansmandaki 36.714 adet stoğu harekete geçirmek için 3 saniyelik Telefon Flaşı Kancası ile ilk 100 siparişi yakalayın. $59 Duo Bundle ile birim katkı payınızı koruyun, uluslararası gönderimlerde 2026 De Minimis gümrük maliyetlerini hesaba katın.'
+          : 'Nightfold growth priority: Mobilize 36,714 warehoused units by launching 3-second Flashlight Blackout hooks to secure the first 100 orders. Protect contribution margin with $59 Duo Bundle and account for 2026 De Minimis customs.';
     }
 
     return NextResponse.json({
       success: true,
       reply,
-      provider: 'nightfold-dtc-heuristics',
-      model: 'neural-cfo-v3.0',
+      provider: 'nightfold-dtc-heuristics-2026',
+      model: 'meta-growth-cfo-2026',
       tokensUsed: 220,
       fallbackMode: true,
     });

@@ -51,8 +51,8 @@ export default function AICoachSection({
       role: 'assistant',
       text:
         language === 'tr'
-          ? 'Merhaba! Ben ShopPulse AI Satış Koçunuz. Mağazanızın son 90 günlük sipariş, stok ve rakip verilerini analiz ettim. Bugün hangi konuyu optimize etmek istersiniz?'
-          : 'Hello! I am your ShopPulse AI Growth Copilot. I have analyzed your Shopify orders, stock velocity, and competitor moves. What would you like to optimize today?',
+          ? 'Merhaba! Ben ShopPulse AI Büyüme Direktörünüz. Nightfold DeepRest 3D Uyku Maskesi ve 36.714 adetlik stoğunuz için 2026 Meta reklam mimarisi, kreatif kancaları ve birim iktisadı stratejiniz hazır. Bugün hangi konuyu optimize etmek istersiniz?'
+          : 'Hello! I am your ShopPulse AI Growth Director. The 2026 Meta ad architecture, creative hooks, and unit economics strategy for Nightfold DeepRest and your 36,714 units are ready. What would you like to optimize today?',
     },
   ]);
   const [inputMessage, setInputMessage] = useState('');
@@ -313,25 +313,49 @@ export default function AICoachSection({
                 onClick={() =>
                   handleSendMessage(
                     language === 'tr'
-                      ? 'Dönüşüm oranımı nasıl artırabilirim?'
-                      : 'How can I lift my store conversion rate?'
+                      ? 'İlk satışı ve ilk 100 siparişi yakalamak için dönüşüm stratejisini açıkla'
+                      : 'Explain conversion strategy to capture the first 100 orders'
                   )
                 }
                 className="whitespace-nowrap px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-300 border border-white/[0.06] hover:bg-zinc-850"
               >
-                {language === 'tr' ? 'Dönüşüm Tüyoları' : 'Conversion Tips'}
+                {language === 'tr' ? '🎯 İlk 100 Sipariş Planı' : '🎯 First 100 Orders'}
               </button>
               <button
                 onClick={() =>
                   handleSendMessage(
                     language === 'tr'
-                      ? 'Rakip ZaraStyle fiyat hareketlerini açıkla'
-                      : 'Explain competitor ZaraStyle moves'
+                      ? '2026 Meta reklam mimarisi (ABO test ve Advantage+ ölçekleme) stratejisi nedir?'
+                      : 'What is the 2026 Meta campaign architecture (ABO test & Advantage+ scaling)?'
                   )
                 }
                 className="whitespace-nowrap px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-300 border border-white/[0.06] hover:bg-zinc-850"
               >
-                {language === 'tr' ? 'Rakip Analizi' : 'Competitor Move'}
+                {language === 'tr' ? '📈 2026 Meta Mimarisi' : '📈 2026 Meta Architecture'}
+              </button>
+              <button
+                onClick={() =>
+                  handleSendMessage(
+                    language === 'tr'
+                      ? 'Duo Bundle ($59), 2026 De Minimis gümrük maliyetleri ve net katkı payı analizi yap'
+                      : 'Analyze Duo Bundle ($59), 2026 De Minimis customs, and net contribution margin'
+                  )
+                }
+                className="whitespace-nowrap px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-300 border border-white/[0.06] hover:bg-zinc-850"
+              >
+                {language === 'tr' ? '💰 Birim İktisadı & De Minimis' : '💰 Unit Economics'}
+              </button>
+              <button
+                onClick={() =>
+                  handleSendMessage(
+                    language === 'tr'
+                      ? 'Manta Sleep PRO ($39.99) karşısında Nightfold fiyat arbitrajı ve kanca taktikleri'
+                      : 'Nightfold price arbitrage and hook tactics vs Manta Sleep PRO ($39.99)'
+                  )
+                }
+                className="whitespace-nowrap px-2.5 py-1 rounded-md bg-zinc-900 text-zinc-300 border border-white/[0.06] hover:bg-zinc-850"
+              >
+                {language === 'tr' ? '🏆 Manta PRO vs Arbitraj' : '🏆 Competitor Move'}
               </button>
             </div>
 
