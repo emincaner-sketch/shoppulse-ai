@@ -172,8 +172,8 @@ export default function MetaAdsManagerPage() {
         setToast({
           title:
             newStatus === 'ACTIVE'
-              ? (language === 'tr' ? 'Kampanya Başlatıldı' : 'Campaign Activated')
-              : (language === 'tr' ? 'Kampanya Durduruldu' : 'Campaign Paused'),
+              ? (language === 'tr' ? 'Kampanya başlatıldı' : 'Campaign started')
+              : (language === 'tr' ? 'Kampanya durduruldu' : 'Campaign paused'),
           message:
             language === 'tr'
               ? (newStatus === 'ACTIVE'

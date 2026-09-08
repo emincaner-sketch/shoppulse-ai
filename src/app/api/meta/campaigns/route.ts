@@ -243,21 +243,56 @@ export async function GET(request: NextRequest) {
     } else {
       const errData = await res.json().catch(() => ({}));
       console.warn('[Meta API] Live fetch error status:', res.status, errData);
-      return NextResponse.json(
-        {
-          isConnected: false,
-          error: errData?.error?.message || 'Meta API kampanyaları getirilemedi.',
-          campaigns: [],
-        },
-        { status: res.status }
+
+      const totalSpend = DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.spendToday, 0);
+      const activeCamps = DEFAULT_NIGHTFOLD_CAMPAIGNS.filter((c) => c.status === 'ACTIVE');
+      const totalBudget = DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.dailyBudget, 0);
+      const blendedRoas = parseFloat(
+        (DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.roasToday * c.spendToday, 0) / totalSpend).toFixed(2)
       );
+      const averageCpc = parseFloat(
+        (DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.cpc, 0) / DEFAULT_NIGHTFOLD_CAMPAIGNS.length).toFixed(2)
+      );
+      const averageCtr = parseFloat(
+        (DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.ctr, 0) / DEFAULT_NIGHTFOLD_CAMPAIGNS.length).toFixed(2)
+      );
+
+      return NextResponse.json({
+        isConnected: false,
+        isDemo: true,
+        error: errData?.error?.message || 'Meta API oturum süresi dolmuş veya bağlantı başarısız.',
+        campaigns: DEFAULT_NIGHTFOLD_CAMPAIGNS,
+        stats: {
+          totalSpend,
+          totalBudget,
+          blendedRoas,
+          averageCpc,
+          averageCtr,
+          activeCount: activeCamps.length,
+          totalCount: DEFAULT_NIGHTFOLD_CAMPAIGNS.length,
+        },
+      });
     }
   } catch (err: any) {
     console.error('[Meta API] Live fetch exception:', err);
-    return NextResponse.json(
-      { isConnected: false, error: err.message, campaigns: [] },
-      { status: 500 }
-    );
+    const totalSpend = DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.spendToday, 0);
+    const activeCamps = DEFAULT_NIGHTFOLD_CAMPAIGNS.filter((c) => c.status === 'ACTIVE');
+    const totalBudget = DEFAULT_NIGHTFOLD_CAMPAIGNS.reduce((acc, c) => acc + c.dailyBudget, 0);
+    return NextResponse.json({
+      isConnected: false,
+      isDemo: true,
+      error: err.message,
+      campaigns: DEFAULT_NIGHTFOLD_CAMPAIGNS,
+      stats: {
+        totalSpend,
+        totalBudget,
+        blendedRoas: 4.12,
+        averageCpc: 0.49,
+        averageCtr: 3.0,
+        activeCount: activeCamps.length,
+        totalCount: DEFAULT_NIGHTFOLD_CAMPAIGNS.length,
+      },
+    });
   }
 }
 
